@@ -23,7 +23,9 @@ To score points, you must place valid sheep cards into your field. You can build
 - Modifiers: (makes a match worth 1 point)
   - Paint Modifier: Allows you to combine any color head and butt together.
 
-  - Franken Modifier: Allows you to combine two butts or two heads together into a "Franken Sheep".
+  - Franken Modifier: Allows you to combine 2 butts or 2 heads together into a "Franken Sheep".
+
+  - Only 1 modifier may be put on one sheep at a time, and they can only be played if they actively resolve an invalid sheep state.
 
 - Body Swapping: You can upgrade or replace parts of existing sheep in your own field or an opponent's field, provided you leave a complete matching sheep behind. If you fix a painted sheep in an opponent's field, you take the replaced part and the modifier card into your hand.
 
@@ -39,17 +41,19 @@ To score points, you must place valid sheep cards into your field. You can build
 
 ## "Is That Sheep Looking At Me?" Cards (Chaos Cards)
 
-These 5 powerful cards trigger a coin-flip mechanic where you predict whether the sheep coin is or isn't looking at you. If you guess correctly, you use the effect; if you're wrong, your opponent uses it against you. They bypass Franken Sheep protections, and you can only play one per turn.
+These 5 powerful cards trigger a coin-flip mechanic where you predict whether the sheep coin is or isn't looking at you. If you guess correctly, you use the effect; if you're wrong, your opponent uses it against you. They bypass Franken Sheep protections, and you can only play 1 per turn.
 
-- Lure two sheep: Move 2 sheep from an opponent's field to yours.
+Order of events: A player picks their opponent -> The player makes a prediction -> The coin is flipped -> the Chaos card is resolved.
 
-- Remove two sheep: Send 2 sheep directly to the discard pile.
+- Lure 2 sheep: Move 2 sheep from an opponent's field to yours.
 
-- Yoink entire hand: Take the loser's entire hand of cards.
+- Remove 2 sheep: Send 2 sheep directly to the discard pile.
 
-- Halve two sheep: Deconstruct two of your opponent's sheep, taking the heads/butts and modifiers to your hand (the opponent must pick up the remaining bits). (This means you take 1 piece per sheep and a modifier if that one has it, the opponent still gets to keep remaining bits from their halved sheeps)
+- Yoink entire hand: Take the loser's entire hand of cards. (If you're the loser, you effectively end your turn.)
 
-- Recover one sheep: Pick up the discard pile and play any valid sheep from it into your field.
+- Halve 2 sheep: Deconstruct 2 of your opponent's sheep, taking the heads/butts and modifiers to your hand (the opponent must pick up the remaining bits). (This means you take 1 piece per sheep and a modifier if that one has it, the opponent still gets to keep remaining bits from their halved sheeps, which immediately go back into their hand)
+
+- Recover 1 sheep: Pick up the discard pile and play any valid sheep from it into your field.
 
 ## Structure of a Turn
 
@@ -57,7 +61,7 @@ These 5 powerful cards trigger a coin-flip mechanic where you predict whether th
 
 2. Play: Play as many or as few cards as you want (making sheep, body swapping, or playing actions/chaos cards).
 
-3. Discard & End: You cannot end your turn with more than 7 cards in hand. Discard down to 7 if necessary (you cannot discard Chaos cards).
+3. Discard & End: You cannot end your turn with more than 7 cards in hand. Discard down to 7 if necessary (you cannot discard Chaos cards). You are not required to discard should you hold more than 7 cards outside of your turn.
 
 4. The Sign: To officially end your turn, you must proudly baa like a sheep.
 
