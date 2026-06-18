@@ -1,3 +1,4 @@
+// src/lib/gamestore.ts
 import type {
   GameState,
   Card,
@@ -63,7 +64,6 @@ class GameEngine {
       });
     });
 
-    // 3x wheat, 2x wolf, 2x yoink, 2x re-flip
     actionConfig.forEach(({ name, count }) => {
       for (let i = 0; i < count; i++) {
         deck.push({
@@ -74,7 +74,6 @@ class GameEngine {
       }
     });
 
-    // 2x paint, 2x franken
     modifierConfig.forEach(({ name, count }) => {
       for (let i = 0; i < count; i++) {
         deck.push({
@@ -122,6 +121,27 @@ class GameEngine {
 
     const randomIndex = Math.floor(Math.random() * this.state.players.length);
     this.state.currentTurnPlayerId = this.state.players[randomIndex].id;
+  }
+
+  public isValidSheep(sheep: Sheep): boolean {
+    if (sheep.parts.length !== 2) return false;
+    const [part1, part2] = sheep.parts;
+
+    const hasPaint = sheep.modifier?.name === "Paint";
+    const hasFranken = sheep.modifier?.name === "Franken";
+    const isCorrectStructure = part1.type !== part2.type; // one head and one butt
+    const isCorrectColor =
+      part1.color === part2.color ||
+      part1.color === "rainbow" ||
+      part2.color === "rainbow";
+
+    const structureIsValid = isCorrectStructure || hasFranken;
+    if (!structureIsValid) return false;
+
+    const colorIsValid = isCorrectColor || hasPaint || hasFranken;
+    if (!colorIsValid) return false;
+
+    return true;
   }
 }
 
