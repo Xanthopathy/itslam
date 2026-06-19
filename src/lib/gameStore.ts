@@ -14,6 +14,9 @@ class GameEngine {
     drawPile: [],
     discardPile: [],
     currentTurnPlayerId: "",
+    status: "lobby",
+    gameLog: [],
+    isFinalRound: false,
   });
 
   private createInitialDeck(): Card[] {
@@ -120,6 +123,7 @@ class GameEngine {
         name: name,
         hand: [],
         field: [],
+        itslamPlayedThisTurn: false,
       };
     });
 
