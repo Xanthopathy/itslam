@@ -48,6 +48,13 @@ class GameEngine {
       { name: "Paint", count: 2 },
       { name: "Franken", count: 2 },
     ];
+    const chaosConfig: { name: string }[] = [
+      { name: "Remove 2 Sheep" },
+      { name: "Yoink Entire Hand" },
+      { name: "Lure 2 Sheep" },
+      { name: "Halve 2 Sheep" },
+      { name: "Recover 1 Sheep" },
+    ];
 
     colors.forEach((color) => {
       deck.push({
@@ -82,6 +89,14 @@ class GameEngine {
           type: "modifier",
         });
       }
+    });
+
+    chaosConfig.forEach(({ name }) => {
+      deck.push({
+        id: `chaos-${crypto.randomUUID()}`,
+        name: name,
+        type: "chaos",
+      });
     });
 
     return deck;
@@ -127,7 +142,6 @@ class GameEngine {
     * Check if a sheep is valid:
     - Must have exactly 2 parts (head + butt, or 2 heads/butts if Franken)
     - Both parts must be same color, or at least one is rainbow, or Franken modifier present
-
   */
   public isValidSheep(sheep: Sheep): boolean {
     if (sheep.parts.length !== 2) return false;
@@ -155,7 +169,7 @@ class GameEngine {
    * Check if modifier can be applied
    * - Modifiers resolve invalid sheep states
    * - Paint: allows mismatched colors
-   * - Franken: allows mismatched parts (2 heads or 2 butts)
+   * - Franken: allows mismatched parts (2 heads or 2 butts) (also allows mismatched colors)
    * - Only ONE modifier per sheep
    */
   public canApplyModifier(sheep: Sheep, modifier: Card): boolean {
