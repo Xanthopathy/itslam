@@ -41,7 +41,7 @@ To score points, you must place valid sheep cards into your field. You can build
 
 ## "Is That Sheep Looking At Me?" Cards (ITSLAM / Chaos Cards)
 
-These 5 powerful cards trigger a coin-flip mechanic where you predict whether the sheep coin is or isn't looking at you. If you guess correctly, you use the effect; if you're wrong, your opponent uses it against you. They bypass Franken Sheep protections, and you can only play 1 per turn.
+These 5 powerful cards trigger a coin-flip mechanic where you predict whether the sheep coin is or isn't looking at you. If you guess correctly, you use the effect; if you're wrong, your opponent uses it against you. They bypass Franken Sheep protections, and you can only play 1 per turn. (Per player)
 
 Order of events: A player picks their opponent -> The player makes a prediction -> The coin is flipped -> the ITSLAM card is resolved.
 
