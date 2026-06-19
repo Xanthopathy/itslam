@@ -9,7 +9,7 @@ import type {
 } from "./types";
 
 class GameEngine {
-  state = $state<GameState>({
+  #state = $state<GameState>({
     players: [],
     drawPile: [],
     discardPile: [],
@@ -19,6 +19,14 @@ class GameEngine {
     isFinalRound: false,
   });
 
+  get state(): Readonly<GameState> {
+    return this.#state;
+  }
+
+  // ========= DECK CREATION & SHUFFLING ==========
+  // IMPORTANT: Because we're using MQTT, the host will be the one to run InitGame() and then send the full deck to all clients. This ensures that all clients have the same deck order and can validate game state independently.
+  // The host will broadcast every other RNG event as well.
+  // Make sure to freeze the game if the host disconnects
   private createInitialDeck(): Card[] {
     const deck: Card[] = [];
     const colors: CardColor[] = [
@@ -117,7 +125,7 @@ class GameEngine {
   public InitGame(playerNames: string[]): void {
     const fullDeck = this.shuffle(this.createInitialDeck());
 
-    this.state.players = playerNames.map((name, index) => {
+    this.#state.players = playerNames.map((name, index) => {
       return {
         id: `player-${index + 1}`,
         name: name,
@@ -127,7 +135,7 @@ class GameEngine {
       };
     });
 
-    this.state.players.forEach((player) => {
+    this.#state.players.forEach((player) => {
       for (let i = 0; i < 5; i++) {
         const card = fullDeck.pop();
         if (card) {
@@ -136,10 +144,10 @@ class GameEngine {
       }
     });
 
-    this.state.drawPile = fullDeck;
+    this.#state.drawPile = fullDeck;
 
-    const randomIndex = Math.floor(Math.random() * this.state.players.length);
-    this.state.currentTurnPlayerId = this.state.players[randomIndex].id;
+    const randomIndex = Math.floor(Math.random() * this.#state.players.length);
+    this.#state.currentTurnPlayerId = this.#state.players[randomIndex].id;
   }
 
   /**
@@ -177,16 +185,26 @@ class GameEngine {
    * - Only ONE modifier per sheep
    */
   public canApplyModifier(sheep: Sheep, modifier: Card): boolean {
-    // TODO: Implement
-    return true;
+    if (sheep.modifier || this.isValidSheep(sheep)) return false;
+
+    const [part1, part2] = sheep.parts;
+    if (
+      modifier.name === "Paint" &&
+      part1.color !== part2.color &&
+      part1.type !== part2.type
+    )
+      return true;
+    else if (modifier.name === "Franken" && part1.type === part2.type)
+      return true;
+
+    return false;
   }
 
   /**
    * Apply modifier to sheep object
    */
-  public applyModifier(sheep: Sheep, modifier: Card): Sheep {
-    // TODO: Implement
-    return sheep;
+  public applyModifier(sheep: Sheep, modifier: Card): void {
+    sheep.modifier = modifier;
   }
 
   // ========== FRANKEN SHEEP PROTECTIONS ==========
@@ -194,7 +212,12 @@ class GameEngine {
    * Check double-butt Franken protection vs Wheat action
    */
   private isProtectedFromWheat(sheep: Sheep): boolean {
-    // TODO: Implement
+    const [part1, part2] = sheep.parts;
+    if (
+      sheep.modifier?.name === "Franken" &&
+      sheep.parts.every((p) => p.type === "butt")
+    )
+      return true;
     return false;
   }
 
@@ -202,7 +225,12 @@ class GameEngine {
    * Check double-head Franken protection vs Wolf action
    */
   private isProtectedFromWolf(sheep: Sheep): boolean {
-    // TODO: Implement
+    const [part1, part2] = sheep.parts;
+    if (
+      sheep.modifier?.name === "Franken" &&
+      sheep.parts.every((p) => p.type === "head")
+    )
+      return true;
     return false;
   }
 
@@ -212,7 +240,15 @@ class GameEngine {
    * Update currentTurnPlayerId
    */
   public startTurn(playerId: string): void {
-    // TODO: Implement
+    const player = this.findPlayerById(playerId);
+    if (!player) return;
+
+    player.itslamPlayedThisTurn = false;
+
+    this.drawCard(playerId);
+    while (player.hand.length < 3 && this.state.drawPile.length > 0) {
+      this.drawCard(playerId);
+    }
   }
 
   /**
@@ -220,7 +256,7 @@ class GameEngine {
    * Move to next player
    * Trigger final round if draw pile empty
    */
-  public endTurn(playerId: string): void {
+  public endTurn(playerId: string, cardIdsToDiscard: string[]): void {
     // TODO: Implement
   }
 
@@ -237,13 +273,36 @@ class GameEngine {
   // ========== CARD DRAWING & PLAYING ==========
   /**
    * Draw card from draw pile
-   * Auto-reshuffle discard pile if draw pile empty
    * Add to player hand
-   * Return the card drawn
+   * Trigger final round if draw pile empties
    */
-  public drawCard(playerId: string): Card | undefined {
-    // TODO: Implement
-    return undefined;
+  public drawCard(playerId: string): void {
+    const player = this.findPlayerById(playerId);
+    if (!player) return;
+
+    if (this.state.drawPile.length === 0) return;
+    player.hand.push(this.state.drawPile.pop() as Card);
+    if (this.state.drawPile.length === 0) {
+      this.triggerFinalRound();
+    }
+  }
+
+  /**
+   * Discard a card from player's hand
+   * Add to discard pile
+   */
+  public discardCard(playerId: string, cardId: string): void {
+    const player = this.findPlayerById(playerId);
+    if (!player) return;
+
+    const cardIndex = player.hand.findIndex((c) => c.id === cardId);
+    if (cardIndex === -1) {
+      console.warn(`Player ${playerId} does not have card ${cardId} in hand`);
+      return;
+    }
+
+    const discardedCard = player.hand.splice(cardIndex, 1)[0];
+    this.state.discardPile.push(discardedCard);
   }
 
   /**
@@ -260,7 +319,25 @@ class GameEngine {
     targetPlayerId?: string,
     targetSheepIndex?: number,
   ): boolean {
-    // TODO: Implement
+    /*
+    const player = this.findPlayerById(playerId);
+    if (!player) return false;
+
+    const card = player.hand.find((c) => c.id === cardId);
+    if (!card) return false;
+
+    switch (card.type) {
+      case "head":
+      case "butt":
+        this.playBodyCard(playerId, card, targetSheepIndex);
+        break;
+      case "modifier":
+        // only reachable if card.type === "modifier", so applyModifier's
+        // caller contract is already satisfied here
+        ...
+    }
+    */
+
     return true;
   }
 
@@ -341,6 +418,7 @@ class GameEngine {
    * Play ITSLAM card with coin-flip mechanics:
    * 1. Get player's prediction (heads/tails)
    * 2. Flip coin (random boolean)
+   * IMPORTANT: This should be done on the host and sent to all clients for validation
    * 3. Determine winner based on prediction vs result
    * 4. Route to appropriate handler based on card name
    */
@@ -420,8 +498,9 @@ class GameEngine {
    * - 2 if full rainbow sheep (both parts are rainbow)
    */
   private calculateSheepValue(sheep: Sheep): number {
-    // TODO: Implement
-    return 0;
+    if (!this.isValidSheep(sheep)) return 0;
+    const isFullRainbow = sheep.parts.every((p) => p.color === "rainbow");
+    return isFullRainbow ? 2 : 1;
   }
 
   /**
@@ -432,13 +511,24 @@ class GameEngine {
    * Return Record<playerName, score>
    */
   public getGameScore(): Record<string, number> {
-    // TODO: Implement
-    return {};
+    const score: Record<string, number> = {};
+    this.state.players.forEach((player) => {
+      const sheepScore = player.field.reduce(
+        (accumulator, sheep) => accumulator + this.calculateSheepValue(sheep),
+        0,
+      );
+      const itslamPenalty =
+        player.hand.filter((card) => card.type === "itslam").length * 3;
+      score[player.name] = sheepScore - itslamPenalty;
+    });
+    return score;
   }
 
   /**
    * Trigger final round when draw pile empties
    * Mark game state as in final round
+   * The final round starts with the player who emptied the draw pile
+   * Marks the game as the final round, where everyone gets to play their last turn starting from the emptier.
    */
   private triggerFinalRound(): void {
     // TODO: Implement
@@ -463,23 +553,33 @@ class GameEngine {
 
   // ========== FIELD QUERIES ==========
   public getPlayerField(playerId: string): Sheep[] {
-    // TODO: Implement
-    return [];
+    const player = this.findPlayerById(playerId);
+    if (!player) return [];
+    return player.field;
   }
 
   public getPlayerHand(playerId: string): Card[] {
-    // TODO: Implement
-    return [];
+    const player = this.findPlayerById(playerId);
+    if (!player) return [];
+    return player.hand;
   }
 
   public getRemainingDeckSize(): number {
-    // TODO: Implement
-    return 0;
+    return this.state.drawPile.length;
   }
 
   public getDiscardPileSize(): number {
-    // TODO: Implement
-    return 0;
+    return this.state.discardPile.length;
+  }
+
+  // ========== HELPER FUNCTIONS ==========
+  private findPlayerById(playerId: string): Player | undefined {
+    const player = this.state.players.find((p) => p.id === playerId);
+    if (!player) {
+      console.error(`Player ${playerId} not found.`);
+      return undefined;
+    }
+    return player;
   }
 }
 
