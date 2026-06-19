@@ -9,7 +9,7 @@ import type {
 } from "./types";
 
 class GameEngine {
-  #state = $state<GameState>({
+  state = $state<GameState>({
     players: [],
     drawPile: [],
     discardPile: [],
@@ -18,10 +18,6 @@ class GameEngine {
     gameLog: [],
     isFinalRound: false,
   });
-
-  get state(): Readonly<GameState> {
-    return this.#state;
-  }
 
   // ========= DECK CREATION & SHUFFLING ==========
   // IMPORTANT: Because we're using MQTT, the host will be the one to run InitGame() and then send the full deck to all clients. This ensures that all clients have the same deck order and can validate game state independently.
@@ -125,7 +121,7 @@ class GameEngine {
   public InitGame(playerNames: string[]): void {
     const fullDeck = this.shuffle(this.createInitialDeck());
 
-    this.#state.players = playerNames.map((name, index) => {
+    this.state.players = playerNames.map((name, index) => {
       return {
         id: `player-${index + 1}`,
         name: name,
@@ -135,7 +131,7 @@ class GameEngine {
       };
     });
 
-    this.#state.players.forEach((player) => {
+    this.state.players.forEach((player) => {
       for (let i = 0; i < 5; i++) {
         const card = fullDeck.pop();
         if (card) {
@@ -144,10 +140,10 @@ class GameEngine {
       }
     });
 
-    this.#state.drawPile = fullDeck;
+    this.state.drawPile = fullDeck;
 
-    const randomIndex = Math.floor(Math.random() * this.#state.players.length);
-    this.#state.currentTurnPlayerId = this.#state.players[randomIndex].id;
+    const randomIndex = Math.floor(Math.random() * this.state.players.length);
+    this.state.currentTurnPlayerId = this.state.players[randomIndex].id;
   }
 
   /**
