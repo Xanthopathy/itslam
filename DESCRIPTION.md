@@ -27,7 +27,7 @@ To score points, you must place valid sheep cards into your field. You can build
 
   - Only 1 modifier may be put on one sheep at a time, and they can only be played if they actively resolve an invalid sheep state.
 
-- Body Swapping: You can upgrade or replace parts of existing sheep in your own field or an opponent's field, provided you leave a complete matching sheep behind. If you fix a painted sheep in an opponent's field, you take the replaced part and the modifier card into your hand.
+- Body Swapping: You can upgrade or replace parts of existing sheep in your own field or an opponent's field, provided you leave a complete matching sheep behind. If you fix a painted sheep in an opponent's field, you take the replaced part and the modifier card into your hand. (The board can NEVER have a non-complete sheep, it must go to a player's hand or the discard pile during any resolution)
 
 ## Action Cards
 
@@ -37,7 +37,7 @@ To score points, you must place valid sheep cards into your field. You can build
 
 - Wolf: Completely discard a sheep from someone's field. (Protected by double-headed Franken Sheep, because it can see the wolf coming).
 
-- Reflip: Forces a coin re-flip if you don't like the result of an "Is That Sheep Looking At Me" card.
+- Reflip: Forces a coin re-flip if you don't like the result of an "Is That Sheep Looking At Me" card. We give a 5 second grace period after a flip result, at which time ANYONE can play Reflip regardless of whether it's their turn or not.
 
 ## "Is That Sheep Looking At Me?" Cards (Chaos Cards)
 
