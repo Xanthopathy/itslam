@@ -8,6 +8,7 @@ import type {
   CardType,
 } from "./types";
 
+// TODO: Split into multiple files for better organization
 class GameEngine {
   state = $state<GameState>({
     players: [],
@@ -291,13 +292,9 @@ class GameEngine {
     const player = this.findPlayerById(playerId);
     if (!player) return;
 
-    const cardIndex = player.hand.findIndex((c) => c.id === cardId);
-    if (cardIndex === -1) {
-      console.warn(`Player ${playerId} does not have card ${cardId} in hand`);
-      return;
-    }
+    const discardedCard = this.removeCardFromHand(player, cardId);
+    if (!discardedCard) return;
 
-    const discardedCard = player.hand.splice(cardIndex, 1)[0];
     this.state.discardPile.push(discardedCard);
   }
 
@@ -315,24 +312,21 @@ class GameEngine {
     targetPlayerId?: string,
     targetSheepIndex?: number,
   ): boolean {
-    /*
-    const player = this.findPlayerById(playerId);
-    if (!player) return false;
+    // const player = this.findPlayerById(playerId);
+    // if (!player) return false;
 
-    const card = player.hand.find((c) => c.id === cardId);
-    if (!card) return false;
+    // const card = player.hand.find((c) => c.id === cardId);
+    // if (!card) return false;
 
-    switch (card.type) {
-      case "head":
-      case "butt":
-        this.playBodyCard(playerId, card, targetSheepIndex);
-        break;
-      case "modifier":
-        // only reachable if card.type === "modifier", so applyModifier's
-        // caller contract is already satisfied here
-        ...
-    }
-    */
+    // switch (card.type) {
+    //   case "head":
+    //   case "butt":
+    //     this.playBodyCard(playerId, card, targetSheepIndex);
+    //     break;
+    //   case "modifier":
+    //   // only reachable if card.type === "modifier", so applyModifier's
+    //   // caller contract is already satisfied here
+    // }
 
     return true;
   }
@@ -343,18 +337,19 @@ class GameEngine {
    * - Else: create new incomplete sheep in field
    */
   private playBodyCard(
-    playerId: string,
+    player: Player,
     card: Card,
     targetSheepIndex?: number,
   ): void {
-    // TODO: Implement
+    this.removeCardFromHand(player, card.id);
+    // TODO: Finish
   }
 
   /**
    * Route action card to handler
    */
   private playActionCard(
-    playerId: string,
+    player: Player,
     card: Card,
     targetPlayerId?: string,
     targetSheepIndex?: number,
@@ -366,7 +361,7 @@ class GameEngine {
   /**
    * Yoink: Steal 2 random cards from opponent's hand
    */
-  private handleYoink(playerId: string, targetPlayerId: string): void {
+  private handleYoink(player: Player, targetPlayerId: string): void {
     // TODO: Implement
   }
 
@@ -376,7 +371,7 @@ class GameEngine {
    * - Move to active player's field
    */
   private handleWheat(
-    playerId: string,
+    player: Player,
     targetPlayerId: string,
     targetSheepIndex?: number,
   ): void {
@@ -419,7 +414,7 @@ class GameEngine {
    * 4. Route to appropriate handler based on card name
    */
   private playItslamCard(
-    playerId: string,
+    player: Player,
     card: Card,
     targetPlayerId?: string,
   ): void {
@@ -429,7 +424,7 @@ class GameEngine {
   /**
    * Lure 2 sheep: Move 2 sheep from opponent's field to beneficiary's field
    */
-  private handleLure2Sheep(beneficiaryId: string, targetId: string): void {
+  private handleLure2Sheep(beneficiary: Player, target: Player): void {
     // TODO: Implement
   }
 
@@ -437,14 +432,14 @@ class GameEngine {
    * Remove 2 sheep: Send 2 sheep from target's field to discard pile
    * Discard parts + modifiers
    */
-  private handleRemove2Sheep(targetId: string): void {
+  private handleRemove2Sheep(target: Player): void {
     // TODO: Implement
   }
 
   /**
    * Yoink entire hand: Transfer all cards from opponent's hand to beneficiary's hand
    */
-  private handleYoinkEntireHand(beneficiaryId: string, targetId: string): void {
+  private handleYoinkEntireHand(beneficiary: Player, target: Player): void {
     // TODO: Implement
   }
 
@@ -453,7 +448,7 @@ class GameEngine {
    * - Beneficiary takes 1 part + modifier from each
    * - Target gets remaining part back to hand
    */
-  private handleHalve2Sheep(targetId: string): void {
+  private handleHalve2Sheep(target: Player): void {
     // TODO: Implement
   }
 
@@ -462,7 +457,7 @@ class GameEngine {
    * Play it to beneficiary's field
    * Remove from discard pile
    */
-  private handleRecover1Sheep(playerId: string): void {
+  private handleRecover1Sheep(player: Player): void {
     // TODO: Implement
   }
 
@@ -576,6 +571,21 @@ class GameEngine {
       return undefined;
     }
     return player;
+  }
+
+  private findCardInHand(player: Player, cardId: string): number | undefined {
+    const cardIndex = player.hand.findIndex((c) => c.id === cardId);
+    if (cardIndex === -1) {
+      console.error(`Card ${cardId} not found in player ${player.id}'s hand.`);
+      return undefined;
+    }
+    return cardIndex;
+  }
+
+  private removeCardFromHand(player: Player, cardId: string): Card | undefined {
+    const cardIndex = this.findCardInHand(player, cardId);
+    if (cardIndex === undefined) return undefined;
+    return player.hand.splice(cardIndex, 1)[0];
   }
 }
 
