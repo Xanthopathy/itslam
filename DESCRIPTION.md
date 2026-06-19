@@ -39,11 +39,11 @@ To score points, you must place valid sheep cards into your field. You can build
 
 - Reflip: Forces a coin re-flip if you don't like the result of an "Is That Sheep Looking At Me" card. We give a 5 second grace period after a flip result, at which time ANYONE can play Reflip regardless of whether it's their turn or not.
 
-## "Is That Sheep Looking At Me?" Cards (Chaos Cards)
+## "Is That Sheep Looking At Me?" Cards (ITSLAM / Chaos Cards)
 
 These 5 powerful cards trigger a coin-flip mechanic where you predict whether the sheep coin is or isn't looking at you. If you guess correctly, you use the effect; if you're wrong, your opponent uses it against you. They bypass Franken Sheep protections, and you can only play 1 per turn.
 
-Order of events: A player picks their opponent -> The player makes a prediction -> The coin is flipped -> the Chaos card is resolved.
+Order of events: A player picks their opponent -> The player makes a prediction -> The coin is flipped -> the ITSLAM card is resolved.
 
 - Lure 2 sheep: Move 2 sheep from an opponent's field to yours.
 
@@ -59,9 +59,9 @@ Order of events: A player picks their opponent -> The player makes a prediction 
 
 1. Draw: Start your turn by drawing 1 card. You must have at least 3 cards in hand, so keep drawing until you do.
 
-2. Play: Play as many or as few cards as you want (making sheep, body swapping, or playing actions/chaos cards).
+2. Play: Play as many or as few cards as you want (making sheep, body swapping, or playing actions/ITSLAM cards).
 
-3. Discard & End: You cannot end your turn with more than 7 cards in hand. Discard down to 7 if necessary (you cannot discard Chaos cards). You are not required to discard should you hold more than 7 cards outside of your turn.
+3. Discard & End: You cannot end your turn with more than 7 cards in hand. Discard down to 7 if necessary (you cannot discard ITSLAM cards). You are not required to discard should you hold more than 7 cards outside of your turn.
 
 4. The Sign: To officially end your turn, you must proudly baa like a sheep.
 
@@ -75,4 +75,4 @@ Scoring:
 
 - +2 Points for every Full Rainbow Sheep.
 
-- -3 Points for every Chaos ("Is That Sheep Looking At Me?") card left in your hand.
+- -3 Points for every ITSLAM ("Is That Sheep Looking At Me?") card left in your hand.

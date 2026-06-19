@@ -48,7 +48,7 @@ class GameEngine {
       { name: "Paint", count: 2 },
       { name: "Franken", count: 2 },
     ];
-    const chaosConfig: { name: string }[] = [
+    const itslamConfig: { name: string }[] = [
       { name: "Remove 2 Sheep" },
       { name: "Yoink Entire Hand" },
       { name: "Lure 2 Sheep" },
@@ -91,11 +91,11 @@ class GameEngine {
       }
     });
 
-    chaosConfig.forEach(({ name }) => {
+    itslamConfig.forEach(({ name }) => {
       deck.push({
-        id: `chaos-${crypto.randomUUID()}`,
+        id: `itslam-${crypto.randomUUID()}`,
         name: name,
-        type: "chaos",
+        type: "itslam",
       });
     });
 
@@ -212,7 +212,7 @@ class GameEngine {
   }
 
   /**
-   * End turn: discard down to 7 cards (preserve Chaos cards)
+   * End turn: discard down to 7 cards (preserve itslam cards)
    * Move to next player
    * Trigger final round if draw pile empty
    */
@@ -247,7 +247,7 @@ class GameEngine {
    * - head/butt: call playBodyCard()
    * - action: call playActionCard()
    * - modifier: validate & apply to target sheep
-   * - chaos: call playChaosCard()
+   * - itslam: call playItslamCard()
    * Return success/failure
    */
   public playCard(
@@ -320,8 +320,8 @@ class GameEngine {
   }
 
   /**
-   * Re-flip: Allow re-rolling a Chaos coin flip
-   * - Used in response to Chaos card flip result
+   * Re-flip: Allow re-rolling an ITSLAM coin flip
+   * - Used in response to ITSLAM card flip result
    */
   private handleReFlip(
     playerId: string,
@@ -331,15 +331,16 @@ class GameEngine {
     // TODO: Implement
   }
 
-  // ========== CHAOS CARD HANDLERS ==========
+  // ========== ITSLAM CARD HANDLERS ==========
+
   /**
-   * Play Chaos card with coin-flip mechanics:
+   * Play ITSLAM card with coin-flip mechanics:
    * 1. Get player's prediction (heads/tails)
    * 2. Flip coin (random boolean)
    * 3. Determine winner based on prediction vs result
    * 4. Route to appropriate handler based on card name
    */
-  private playChaosCard(
+  private playItslamCard(
     playerId: string,
     card: Card,
     targetPlayerId?: string,
@@ -423,7 +424,7 @@ class GameEngine {
    * Get game score for all players:
    * - +1 per standard sheep on field
    * - +2 per full rainbow sheep on field
-   * - -3 per Chaos card in hand
+   * - -3 per ITSLAM card in hand
    * Return Record<playerName, score>
    */
   public getGameScore(): Record<string, number> {
