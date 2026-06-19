@@ -1,3 +1,7 @@
+## Project Scope
+
+This project is meant to be a simple web app clone of Zedaph's Is That Sheep Looking At Me card game, to be hosted on github for a small group of 4 players and doesn't require infrastructure for more than that.
+
 ## The Goal
 
 The objective of the game is to have the largest flock of sheep in your field (the table area in front of you) at the end of the game.
