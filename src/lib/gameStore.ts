@@ -304,45 +304,162 @@ class GameEngine {
    * - action: call playActionCard()
    * - modifier: validate & apply to target sheep
    * - itslam: call playItslamCard()
+   * Handles removal
    * Return success/failure
+   * Multicard (2 or 3):
+   * - Forming a sheep on your board (with 2 parts and an optional modifier)
+   * - Modifying an existing sheep on ANY board (if you're also bringing a modifier in addition to swapping 1 part of the sheep)
+   * Singlecard:
+   * - Modifying an existing sheep on ANY board (if you're only swapping 1 part of the sheep)
+   * - Actions
+   * - ITSLAM
    */
-  public playCard(
+  public playCards(
     playerId: string,
-    cardId: string,
+    cardIds: string[],
     targetPlayerId?: string,
     targetSheepIndex?: number,
+    targetPartIndex?: number,
   ): boolean {
-    // const player = this.findPlayerById(playerId);
-    // if (!player) return false;
+    const player = this.findPlayerById(playerId);
+    if (!player) return false;
 
-    // const card = player.hand.find((c) => c.id === cardId);
-    // if (!card) return false;
+    // fetch all cards from cardIds
+    const cards: Card[] = [];
+    for (const cardId of cardIds) {
+      const cardIndex = this.findCardInHand(player, cardId);
+      if (cardIndex === undefined) return false;
+      cards.push(player.hand[cardIndex]);
+    }
 
-    // switch (card.type) {
-    //   case "head":
-    //   case "butt":
-    //     this.playBodyCard(playerId, card, targetSheepIndex);
-    //     break;
-    //   case "modifier":
-    //   // only reachable if card.type === "modifier", so applyModifier's
-    //   // caller contract is already satisfied here
-    // }
+    const targetPlayer = targetPlayerId
+      ? this.findPlayerById(targetPlayerId)
+      : undefined;
+    if (targetPlayerId && !targetPlayer) return false;
+
+    let success = false;
+    switch (cardIds.length) {
+      // action, itslam, single-part-swap (playing modifier alone is illegal)
+      case 1: {
+        const card = cards[0];
+        if (card.type === "action") {
+          success = this.playActionCard(player, card, targetPlayerId);
+          break;
+        } else if (card.type === "itslam") {
+          success = this.playItslamCard(player, card, targetPlayerId);
+          break;
+        } else if (card.type === "head" || card.type === "butt") {
+          if (
+            !targetPlayer ||
+            targetSheepIndex === undefined ||
+            targetPartIndex === undefined
+          )
+            return false;
+          success = this.swapSheepPart(
+            player,
+            targetPlayer,
+            targetSheepIndex,
+            targetPartIndex,
+            card,
+          );
+          break;
+        } else {
+          success = false;
+          break;
+        }
+      }
+      // 2 parts, 2 parts + modifier, 1 part + modifier (swap)
+      case 2: {
+        const parts = cards.filter(
+          (c: Card) => c.type === "head" || c.type === "butt",
+        );
+        if (parts.length === 2) {
+          success = this.formSheep(player, [parts[0], parts[1]]);
+          break;
+        } else {
+          success = false;
+          break;
+        }
+      }
+      // 2 parts + modifier
+      case 3: {
+      }
+      default:
+        success = false;
+    }
+
+    if (!success) return false;
+    for (const id of cardIds) this.removeCardFromHand(player, id);
 
     return true;
   }
 
   /**
-   * Play head or butt card:
-   * - If targetSheepIndex: add to incomplete sheep (max 2 parts)
-   * - Else: create new incomplete sheep in field
+   * Form a sheep from 2 parts and optional modifier
    */
-  private playBodyCard(
+  private formSheep(
     player: Player,
-    card: Card,
-    targetSheepIndex?: number,
-  ): void {
-    this.removeCardFromHand(player, card.id);
-    // TODO: Finish
+    parts: [Card, Card],
+    modifier?: Card,
+  ): boolean {
+    const candidate: Sheep = { parts };
+
+    if (!modifier) {
+      if (!this.isValidSheep(candidate)) return false;
+      player.field.push(candidate);
+      return true;
+    }
+
+    if (!this.canApplyModifier(candidate, modifier)) return false;
+    this.applyModifier(candidate, modifier);
+    player.field.push(candidate);
+
+    return true;
+  }
+
+  /**
+   * Swap one part of a sheep on any player's field with a card already
+   * resolved by the caller (does NOT remove cardFromHand from player's hand —
+   * playCards handles that).
+   * On success: any part/modifier bumped off the sheep goes directly into
+   * player's hand (the active player performing the swap), regardless of
+   * whose field was modified.
+   * Return success/failure
+   */
+  private swapSheepPart(
+    player: Player,
+    targetPlayer: Player,
+    targetSheepIndex: number,
+    targetPartIndex: number,
+    partFromHand: Card,
+  ): boolean {
+    const targetSheep = targetPlayer.field[targetSheepIndex];
+    if (!targetSheep) return false;
+    if (targetPartIndex < 0 || targetPartIndex > 1) return false;
+
+    const newParts = [...targetSheep.parts] as [Card, Card];
+    const oldPart = newParts[targetPartIndex];
+    newParts[targetPartIndex] = partFromHand;
+
+    const candidate: Sheep = {
+      parts: newParts,
+      modifier: targetSheep.modifier,
+    };
+    if (!this.isValidSheep(candidate)) return false;
+
+    const oldModifier = targetSheep.modifier;
+    const modifierNowRedundant =
+      oldModifier && !this.canApplyModifier(candidate, oldModifier);
+
+    targetSheep.parts = newParts;
+    player.hand.push(oldPart);
+
+    if (modifierNowRedundant) {
+      targetSheep.modifier = undefined;
+      player.hand.push(oldModifier);
+    }
+
+    return true;
   }
 
   /**
@@ -353,8 +470,9 @@ class GameEngine {
     card: Card,
     targetPlayerId?: string,
     targetSheepIndex?: number,
-  ): void {
+  ): boolean {
     // TODO: Implement switch on card.name
+    return false;
   }
 
   // ========== ACTION CARD HANDLERS ==========
@@ -417,8 +535,9 @@ class GameEngine {
     player: Player,
     card: Card,
     targetPlayerId?: string,
-  ): void {
+  ): boolean {
     // TODO: Implement
+    return false;
   }
 
   /**
@@ -459,26 +578,6 @@ class GameEngine {
    */
   private handleRecover1Sheep(player: Player): void {
     // TODO: Implement
-  }
-
-  // ========== BODY SWAPPING ==========
-  /**
-   * Swap one part of a sheep with a card from hand:
-   * - Find sheep at targetSheepIndex on targetPlayerId's field
-   * - Replace sheep.parts[partIndex] with cardFromHand
-   * - Validate resulting sheep is valid
-   * - If valid && opponent's sheep: take replaced part + modifier to hand
-   * - Return success/failure
-   */
-  public swapSheepPart(
-    playerId: string,
-    targetPlayerId: string,
-    targetSheepIndex: number,
-    partIndex: number,
-    cardFromHandId: string,
-  ): boolean {
-    // TODO: Implement
-    return false;
   }
 
   // ========== SCORING & GAME END ==========
