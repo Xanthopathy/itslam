@@ -208,27 +208,23 @@ class GameEngine {
   /**
    * Check double-butt Franken protection vs Wheat action
    */
-  private isProtectedFromWheat(sheep: Sheep): boolean {
-    const [part1, part2] = sheep.parts;
-    if (
-      sheep.modifier?.name === "Franken" &&
-      sheep.parts.every((p) => p.type === "butt")
-    )
-      return true;
-    return false;
+  private isFieldProtectedFromWheat(field: Sheep[]): boolean {
+    return field.some(
+      (sheep) =>
+        sheep.modifier?.name === "Franken" &&
+        sheep.parts.every((p) => p.type === "butt"),
+    );
   }
 
   /**
    * Check double-head Franken protection vs Wolf action
    */
-  private isProtectedFromWolf(sheep: Sheep): boolean {
-    const [part1, part2] = sheep.parts;
-    if (
-      sheep.modifier?.name === "Franken" &&
-      sheep.parts.every((p) => p.type === "head")
-    )
-      return true;
-    return false;
+  private isFieldProtectedFromWolf(field: Sheep[]): boolean {
+    return field.some(
+      (sheep) =>
+        sheep.modifier?.name === "Franken" &&
+        sheep.parts.every((p) => p.type === "head"),
+    );
   }
 
   // ========== TURN MANAGEMENT ==========
@@ -315,6 +311,7 @@ class GameEngine {
     targetPlayerId?: string,
     targetSheepIndex?: number,
     targetPartIndex?: number,
+    chosenIndices?: number[],
   ): boolean {
     const player = this.findPlayerById(playerId);
     if (!player) return false;
@@ -358,6 +355,7 @@ class GameEngine {
             card,
           );
           break;
+          // TODO: playReFlipCard()
         } else {
           success = false;
           break;
@@ -476,12 +474,13 @@ class GameEngine {
     card: Card,
     targetPlayer?: Player,
     targetSheepIndex?: number,
+    chosenIndices?: number[],
   ): boolean {
     let success = false;
     switch (card.name) {
       case "Yoink":
-        if (!targetPlayer) return false;
-        success = this.handleYoink(player, targetPlayer);
+        if (!targetPlayer || !chosenIndices) return false;
+        success = this.handleYoink(player, targetPlayer, chosenIndices);
         break;
       case "Wheat":
         if (!targetPlayer || targetSheepIndex === undefined) return false;
@@ -489,7 +488,7 @@ class GameEngine {
         break;
       case "Wolf":
         if (!targetPlayer || targetSheepIndex === undefined) return false;
-        success = this.handleWolf(player, targetPlayer, targetSheepIndex);
+        success = this.handleWolf(targetPlayer, targetSheepIndex);
         break;
     }
 
@@ -497,12 +496,40 @@ class GameEngine {
   }
 
   // ========== ACTION CARD HANDLERS ==========
+
+  public getPlayerHandBlind(player: Player) {
+    // TODO: Implement a way to return a "blind" version of the player's hand, where the cards are face down and only their order is known. This is necessary for Yoink, where the opponent can see the order of cards but not their identities.
+  }
+
   /**
-   * Yoink: Steal 2 random cards from opponent's hand
+   * Yoink: Steal 2 cards face-down from opponent's hand
+   * You get to see the target's hand face down to pick from, where there's a clear order (oldest left -> newest right) for how long the card has been in their hand
+   * Automatically steal all if target has 1 or 2 cards
+   * !HAND MANIPULATION MUST RESPECT CARD ORDER FOR THIS TO WORK, DO NOT SHUFFLE/RANDOMIZE ANY HAND MANIPULATION
    */
-  private handleYoink(player: Player, targetPlayer: Player): boolean {
-    // TODO: Implement
-    return false;
+  private handleYoink(
+    player: Player,
+    targetPlayer: Player,
+    chosenIndices: number[],
+  ): boolean {
+    const expectedCount = Math.min(2, targetPlayer.hand.length);
+    if (chosenIndices.length !== expectedCount) return false;
+
+    const uniqueIndices = new Set(chosenIndices);
+    if (uniqueIndices.size !== chosenIndices.length) return false;
+
+    for (const idx of chosenIndices) {
+      if (idx < 0 || idx >= targetPlayer.hand.length) return false;
+    }
+
+    // remove highest index first so earlier indices don't shift
+    const sortedDescending = [...chosenIndices].sort((a, b) => b - a);
+    for (const idx of sortedDescending) {
+      const [stolenCard] = targetPlayer.hand.splice(idx, 1);
+      player.hand.push(stolenCard);
+    }
+
+    return true;
   }
 
   /**
@@ -515,8 +542,14 @@ class GameEngine {
     targetPlayer: Player,
     targetSheepIndex: number,
   ): boolean {
-    // TODO: Implement
-    return false;
+    const sheep = targetPlayer.field[targetSheepIndex];
+    if (!sheep) return false;
+    if (this.isFieldProtectedFromWheat(targetPlayer.field)) return false;
+
+    targetPlayer.field.splice(targetSheepIndex, 1);
+    player.field.push(sheep);
+
+    return true;
   }
 
   /**
@@ -524,14 +557,19 @@ class GameEngine {
    * - Check isProtectedFromWolf
    * - Send sheep parts + modifier to discard pile
    */
-  private handleWolf(
-    player: Player,
-    targetPlayer: Player,
-    targetSheepIndex: number,
-  ): boolean {
-    // TODO: Implement
-    return false;
+  private handleWolf(targetPlayer: Player, targetSheepIndex: number): boolean {
+    const sheep = targetPlayer.field[targetSheepIndex];
+    if (!sheep) return false;
+    if (this.isFieldProtectedFromWolf(targetPlayer.field)) return false;
+
+    targetPlayer.field.splice(targetSheepIndex, 1);
+    this.state.discardPile.push(...sheep.parts);
+    if (sheep.modifier) this.state.discardPile.push(sheep.modifier);
+
+    return true;
   }
+
+  // ========== ITSLAM CARD HANDLERS ==========
 
   /**
    * !Refactor to be a special action that targets a coin flip
@@ -541,12 +579,10 @@ class GameEngine {
    * - Flip result must have ~5 grace period to allow for re-flip to be played
    * - No limits on usage
    */
-  private handleReFlip(player: Player, targetPlayer: Player): boolean {
+  private playReFlipCard(player: Player, targetPlayer: Player): boolean {
     // TODO: Implement
     return false;
   }
-
-  // ========== ITSLAM CARD HANDLERS ==========
 
   /**
    * Play ITSLAM card with coin-flip mechanics:
