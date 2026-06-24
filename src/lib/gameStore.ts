@@ -335,10 +335,14 @@ class GameEngine {
       case 1: {
         const card = cards[0];
         if (card.type === "action") {
-          success = this.playActionCard(player, card, targetPlayer);
+          success = targetPlayer
+            ? this.playActionCard(player, card, targetPlayer)
+            : false;
           break;
         } else if (card.type === "itslam") {
-          success = this.playItslamCard(player, card, targetPlayer);
+          success = targetPlayer
+            ? this.playItslamCard(player, card, targetPlayer)
+            : false;
           break;
         } else if (card.type === "head" || card.type === "butt") {
           if (
@@ -472,22 +476,24 @@ class GameEngine {
   private playActionCard(
     player: Player,
     card: Card,
-    targetPlayer?: Player,
+    targetPlayer: Player,
     targetSheepIndex?: number,
     chosenIndices?: number[],
   ): boolean {
+    if (player.id === targetPlayer.id) return false;
+
     let success = false;
     switch (card.name) {
       case "Yoink":
-        if (!targetPlayer || !chosenIndices) return false;
+        if (!chosenIndices) return false;
         success = this.handleYoink(player, targetPlayer, chosenIndices);
         break;
       case "Wheat":
-        if (!targetPlayer || targetSheepIndex === undefined) return false;
+        if (targetSheepIndex === undefined) return false;
         success = this.handleWheat(player, targetPlayer, targetSheepIndex);
         break;
       case "Wolf":
-        if (!targetPlayer || targetSheepIndex === undefined) return false;
+        if (targetSheepIndex === undefined) return false;
         success = this.handleWolf(targetPlayer, targetSheepIndex);
         break;
     }
@@ -496,10 +502,6 @@ class GameEngine {
   }
 
   // ========== ACTION CARD HANDLERS ==========
-
-  public getPlayerHandBlind(player: Player) {
-    // TODO: Implement a way to return a "blind" version of the player's hand, where the cards are face down and only their order is known. This is necessary for Yoink, where the opponent can see the order of cards but not their identities.
-  }
 
   /**
    * Yoink: Steal 2 cards face-down from opponent's hand
@@ -595,7 +597,7 @@ class GameEngine {
   private playItslamCard(
     player: Player,
     card: Card,
-    targetPlayer?: Player,
+    targetPlayer: Player,
   ): boolean {
     // TODO: Implement
     return false;
@@ -713,6 +715,16 @@ class GameEngine {
     const player = this.findPlayerById(playerId);
     if (!player) return [];
     return player.hand;
+  }
+
+  /**
+   * Return a "blind" version of the player's hand, where the cards are face down and only their order is known.
+   * This is necessary for Yoink, where the opponent can see the order of cards but not their identities.
+   */
+  public getPlayerHandBlind(playerId: string): { count: number } {
+    const player = this.findPlayerById(playerId);
+    if (!player) return { count: 0 };
+    return { count: player.hand.length };
   }
 
   public getRemainingDeckSize(): number {
