@@ -50,7 +50,7 @@ class GameEngine {
       { name: "Wheat", count: 3 },
       { name: "Wolf", count: 2 },
       { name: "Yoink", count: 2 },
-      { name: "Re-flip", count: 2 },
+      { name: "ReFlip", count: 2 },
     ];
     const modifierConfig: { name: string; count: number }[] = [
       { name: "Paint", count: 2 },
@@ -299,20 +299,15 @@ class GameEngine {
   }
 
   /**
-   * Play a card from hand based on type:
-   * - head/butt: call playBodyCard()
-   * - action: call playActionCard()
-   * - modifier: validate & apply to target sheep
-   * - itslam: call playItslamCard()
-   * Handles removal
-   * Return success/failure
+   * Play card(s) from hand based on type:
+   *
    * Multicard (2 or 3):
-   * - Forming a sheep on your board (with 2 parts and an optional modifier)
-   * - Modifying an existing sheep on ANY board (if you're also bringing a modifier in addition to swapping 1 part of the sheep)
+   * - Forming a sheep on your board (with 2 parts and an optional modifier): call formSheep()
+   *
    * Singlecard:
-   * - Modifying an existing sheep on ANY board (if you're only swapping 1 part of the sheep)
-   * - Actions
-   * - ITSLAM
+   * - Modifying an existing sheep on ANY board (if you're only swapping 1 part of the sheep): call swapSheepPart()
+   * - Actions: call playActionCard()
+   * - ITSLAM: call playItslamCard()
    */
   public playCards(
     playerId: string,
@@ -343,10 +338,10 @@ class GameEngine {
       case 1: {
         const card = cards[0];
         if (card.type === "action") {
-          success = this.playActionCard(player, card, targetPlayerId);
+          success = this.playActionCard(player, card, targetPlayer);
           break;
         } else if (card.type === "itslam") {
-          success = this.playItslamCard(player, card, targetPlayerId);
+          success = this.playItslamCard(player, card, targetPlayer);
           break;
         } else if (card.type === "head" || card.type === "butt") {
           if (
@@ -368,7 +363,7 @@ class GameEngine {
           break;
         }
       }
-      // 2 parts, 2 parts + modifier, 1 part + modifier (swap)
+      // 2 parts
       case 2: {
         const parts = cards.filter(
           (c: Card) => c.type === "head" || c.type === "butt",
@@ -383,6 +378,17 @@ class GameEngine {
       }
       // 2 parts + modifier
       case 3: {
+        const parts = cards.filter(
+          (c: Card) => c.type === "head" || c.type === "butt",
+        );
+        const modifier = cards.find((c: Card) => c.type === "modifier");
+        if (parts.length === 2 && modifier) {
+          success = this.formSheep(player, [parts[0], parts[1]], modifier);
+          break;
+        } else {
+          success = false;
+          break;
+        }
       }
       default:
         success = false;
@@ -468,19 +474,35 @@ class GameEngine {
   private playActionCard(
     player: Player,
     card: Card,
-    targetPlayerId?: string,
+    targetPlayer?: Player,
     targetSheepIndex?: number,
   ): boolean {
-    // TODO: Implement switch on card.name
-    return false;
+    let success = false;
+    switch (card.name) {
+      case "Yoink":
+        if (!targetPlayer) return false;
+        success = this.handleYoink(player, targetPlayer);
+        break;
+      case "Wheat":
+        if (!targetPlayer || targetSheepIndex === undefined) return false;
+        success = this.handleWheat(player, targetPlayer, targetSheepIndex);
+        break;
+      case "Wolf":
+        if (!targetPlayer || targetSheepIndex === undefined) return false;
+        success = this.handleWolf(player, targetPlayer, targetSheepIndex);
+        break;
+    }
+
+    return success;
   }
 
   // ========== ACTION CARD HANDLERS ==========
   /**
    * Yoink: Steal 2 random cards from opponent's hand
    */
-  private handleYoink(player: Player, targetPlayerId: string): void {
+  private handleYoink(player: Player, targetPlayer: Player): boolean {
     // TODO: Implement
+    return false;
   }
 
   /**
@@ -490,10 +512,11 @@ class GameEngine {
    */
   private handleWheat(
     player: Player,
-    targetPlayerId: string,
-    targetSheepIndex?: number,
-  ): void {
+    targetPlayer: Player,
+    targetSheepIndex: number,
+  ): boolean {
     // TODO: Implement
+    return false;
   }
 
   /**
@@ -502,23 +525,25 @@ class GameEngine {
    * - Send sheep parts + modifier to discard pile
    */
   private handleWolf(
-    playerId: string,
-    targetPlayerId: string,
-    targetSheepIndex?: number,
-  ): void {
+    player: Player,
+    targetPlayer: Player,
+    targetSheepIndex: number,
+  ): boolean {
     // TODO: Implement
+    return false;
   }
 
   /**
+   * !Refactor to be a special action that targets a coin flip
    * Re-flip: Allow re-rolling an ITSLAM coin flip
    * - Used in response to ITSLAM card flip result
+   * - ANYONE can play this in response to a coin flip, even if it's not their turn
+   * - Flip result must have ~5 grace period to allow for re-flip to be played
+   * - No limits on usage
    */
-  private handleReFlip(
-    playerId: string,
-    targetPlayerId: string,
-    targetSheepIndex?: number,
-  ): void {
+  private handleReFlip(player: Player, targetPlayer: Player): boolean {
     // TODO: Implement
+    return false;
   }
 
   // ========== ITSLAM CARD HANDLERS ==========
@@ -534,7 +559,7 @@ class GameEngine {
   private playItslamCard(
     player: Player,
     card: Card,
-    targetPlayerId?: string,
+    targetPlayer?: Player,
   ): boolean {
     // TODO: Implement
     return false;
