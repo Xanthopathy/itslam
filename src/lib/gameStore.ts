@@ -254,13 +254,16 @@ class GameEngine {
   }
 
   public getCurrentPlayer(): Player | undefined {
-    // TODO: Implement
-    return undefined;
+    return this.findPlayerById(this.state.currentTurnPlayerId);
   }
 
   public getNextPlayer(): Player | undefined {
-    // TODO: Implement
-    return undefined;
+    const currentIndex = this.state.players.findIndex(
+      (player) => player.id === this.state.currentTurnPlayerId,
+    );
+    if (currentIndex === -1) return undefined; // Not actually needed since we don't plan removals
+    const nextIndex = (currentIndex + 1) % this.state.players.length;
+    return this.state.players[nextIndex];
   }
 
   // ========== CARD DRAWING & PLAYING ==========
@@ -502,7 +505,6 @@ class GameEngine {
   }
 
   // ========== ACTION CARD HANDLERS ==========
-
   /**
    * Yoink: Steal 2 cards face-down from opponent's hand
    * You get to see the target's hand face down to pick from, where there's a clear order (oldest left -> newest right) for how long the card has been in their hand
@@ -572,7 +574,6 @@ class GameEngine {
   }
 
   // ========== ITSLAM CARD HANDLERS ==========
-
   /**
    * !Refactor to be a special action that targets a coin flip
    * Re-flip: Allow re-rolling an ITSLAM coin flip
