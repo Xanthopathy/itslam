@@ -46,16 +46,31 @@ export type Player = {
 
 export type GameStatus = "lobby" | "playing" | "finished";
 
+// 1. Player plays an ITSLAM card, then picks an opponent
+// 2. Player makes a prediction (looking / not looking)
+// 3. Coin flips (host-generated)
+// 4. Grace period - anyone can play Re-flip during this window
+// 5. If Re-flip is played: re-flip, restart from step 2 (player has to make a new prediction)
+// 6. Winner determined (prediction vs result)
+// 7. Effect resolves based on which of the 5 ITSLAM cards it was, and who won
+export type ItslamPhase =
+  | "awaiting_prediction" // step 2: card+opponent picked, waiting on prediction
+  | "flipping" // step 3: host is generating the result (brief, may not even need to be observable)
+  | "grace_period" // step 4: result is in, Re-flip window open
+  | "resolved"; // step 6-7: winner determined, effect applied, ready to clear
+
 // Coin has sheep head and butt
 export type CoinFlipState = {
   challengerId: string;
   defenderId: string;
   cardId: string;
-  prediction?: "looking" | "not_looking"; // heads or tails
-  result?: "looking" | "not_looking";
-  winnerId?: string;
-  isSpinning: boolean;
-  reFlipUsed: boolean;
+  cardName: string;
+  phase: ItslamPhase;
+  prediction?: "looking" | "not_looking"; // cleared on re-flip, set at step 2
+  result?: "looking" | "not_looking"; // set at step 3, cleared on re-flip
+  winnerId?: string; // set at step 6
+  graceWindowEndsAt?: number; // timestamp, set at step 3/4, used by step 4's window
+  reFlipCount: number; // increments each time step 5 triggers, replaces reFlipUsed
 };
 
 export type GameState = {
