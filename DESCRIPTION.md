@@ -33,9 +33,9 @@ To score points, you must place valid sheep cards into your field. You can build
 
 - Yoink: Blindly steal 2 cards from an opponent’s hand.
 
-- Wheat: Lure a sheep from anyone's field to yours. (Protected by double-butted Franken Sheep, because it has no mouth to eat wheat).
+- Wheat: Lure a sheep from anyone's field to yours. (Protected by double-butted Franken Sheep, because it has no mouth to eat wheat). (NOTE: Protection is applied to the entire field regardless of flavor text)
 
-- Wolf: Completely discard a sheep from someone's field. (Protected by double-headed Franken Sheep, because it can see the wolf coming).
+- Wolf: Completely discard a sheep from someone's field. (Protected by double-headed Franken Sheep, because it can see the wolf coming). (NOTE: Protection is applied to the entire field regardless of flavor text)
 
 - Reflip: Forces a coin re-flip if you don't like the result of an "Is That Sheep Looking At Me" card. We give a 5 second grace period after a flip result, at which time ANYONE can play Reflip regardless of whether it's their turn or not.
 
