@@ -136,7 +136,7 @@ class GameEngine {
       for (let i = 0; i < 5; i++) {
         const card = fullDeck.pop();
         if (card) {
-          player.hand.push(card);
+          this.addCardToHand(player, card);
         }
       }
     });
@@ -250,7 +250,28 @@ class GameEngine {
    * Trigger final round if draw pile empty
    */
   public endTurn(playerId: string, cardIdsToDiscard: string[]): void {
-    // TODO: Implement
+    const player = this.findPlayerById(playerId);
+    if (!player) return;
+
+    if (player.hand.length > 7) {
+      if (player.hand.length - cardIdsToDiscard.length < 7) {
+        for (const cardId of cardIdsToDiscard) {
+          const cardIndex = this.findCardIndexById(player, cardId);
+          if (cardIndex !== undefined) {
+            const card = player.hand[cardIndex];
+            if (card.type === "itslam") {
+              console.error("Cannot discard ITSLAM cards.");
+              continue;
+            }
+            this.discardCard(player, card);
+          }
+        }
+      } else {
+        console.error(
+          "Cannot discard that many cards, only discard until you're down to 7 cards in hand.",
+        );
+      }
+    }
   }
 
   public getCurrentPlayer(): Player | undefined {
@@ -277,7 +298,7 @@ class GameEngine {
     if (!player) return;
 
     if (this.state.drawPile.length === 0) return;
-    player.hand.push(this.state.drawPile.pop() as Card);
+    this.addCardToHand(player, this.state.drawPile.pop() as Card);
     if (this.state.drawPile.length === 0) {
       this.triggerFinalRound();
     }
@@ -287,11 +308,8 @@ class GameEngine {
    * Discard a card from player's hand
    * Add to discard pile
    */
-  public discardCard(playerId: string, cardId: string): void {
-    const player = this.findPlayerById(playerId);
-    if (!player) return;
-
-    const discardedCard = this.removeCardFromHand(player, cardId);
+  private discardCard(player: Player, card: Card): void {
+    const discardedCard = this.removeCardFromHand(player, card);
     if (!discardedCard) return;
 
     this.state.discardPile.push(discardedCard);
@@ -322,7 +340,7 @@ class GameEngine {
     // fetch all cards from cardIds
     const cards: Card[] = [];
     for (const cardId of cardIds) {
-      const cardIndex = this.findCardInHand(player, cardId);
+      const cardIndex = this.findCardIndexById(player, cardId);
       if (cardIndex === undefined) return false;
       cards.push(player.hand[cardIndex]);
     }
@@ -400,7 +418,7 @@ class GameEngine {
     }
 
     if (!success) return false;
-    for (const id of cardIds) this.removeCardFromHand(player, id);
+    for (const card of cards) this.removeCardFromHand(player, card);
 
     return true;
   }
@@ -417,13 +435,13 @@ class GameEngine {
 
     if (!modifier) {
       if (!this.isValidSheep(candidate)) return false;
-      player.field.push(candidate);
+      this.addSheepToField(player, candidate);
       return true;
     }
 
     if (!this.canApplyModifier(candidate, modifier)) return false;
     this.applyModifier(candidate, modifier);
-    player.field.push(candidate);
+    this.addSheepToField(player, candidate);
 
     return true;
   }
@@ -463,11 +481,11 @@ class GameEngine {
       oldModifier && !this.canApplyModifier(candidate, oldModifier);
 
     targetSheep.parts = newParts;
-    player.hand.push(oldPart);
+    this.addCardToHand(player, oldPart);
 
     if (modifierNowRedundant) {
       targetSheep.modifier = undefined;
-      player.hand.push(oldModifier);
+      this.addCardToHand(player, oldModifier);
     }
 
     return true;
@@ -529,8 +547,8 @@ class GameEngine {
     // remove highest index first so earlier indices don't shift
     const sortedDescending = [...chosenIndices].sort((a, b) => b - a);
     for (const idx of sortedDescending) {
-      const [stolenCard] = targetPlayer.hand.splice(idx, 1);
-      player.hand.push(stolenCard);
+      const stolenCard = targetPlayer.hand.splice(idx, 1)[0];
+      if (stolenCard) this.addCardToHand(player, stolenCard);
     }
 
     return true;
@@ -546,12 +564,11 @@ class GameEngine {
     targetPlayer: Player,
     targetSheepIndex: number,
   ): boolean {
-    const sheep = targetPlayer.field[targetSheepIndex];
-    if (!sheep) return false;
     if (this.isFieldProtectedFromWheat(targetPlayer.field)) return false;
+    const sheep = this.removeSheepFromField(targetPlayer, targetSheepIndex);
+    if (!sheep) return false;
 
-    targetPlayer.field.splice(targetSheepIndex, 1);
-    player.field.push(sheep);
+    this.addSheepToField(player, sheep);
 
     return true;
   }
@@ -562,11 +579,10 @@ class GameEngine {
    * - Send sheep parts + modifier to discard pile
    */
   private handleWolf(targetPlayer: Player, targetSheepIndex: number): boolean {
-    const sheep = targetPlayer.field[targetSheepIndex];
-    if (!sheep) return false;
     if (this.isFieldProtectedFromWolf(targetPlayer.field)) return false;
+    const sheep = this.removeSheepFromField(targetPlayer, targetSheepIndex);
+    if (!sheep) return false;
 
-    targetPlayer.field.splice(targetSheepIndex, 1);
     this.state.discardPile.push(...sheep.parts);
     if (sheep.modifier) this.state.discardPile.push(sheep.modifier);
 
@@ -746,7 +762,10 @@ class GameEngine {
     return player;
   }
 
-  private findCardInHand(player: Player, cardId: string): number | undefined {
+  private findCardIndexById(
+    player: Player,
+    cardId: string,
+  ): number | undefined {
     const cardIndex = player.hand.findIndex((c) => c.id === cardId);
     if (cardIndex === -1) {
       console.error(`Card ${cardId} not found in player ${player.id}'s hand.`);
@@ -755,10 +774,36 @@ class GameEngine {
     return cardIndex;
   }
 
-  private removeCardFromHand(player: Player, cardId: string): Card | undefined {
-    const cardIndex = this.findCardInHand(player, cardId);
+  private findCardInHand(player: Player, card: Card): number | undefined {
+    return this.findCardIndexById(player, card.id);
+  }
+
+  private removeCardFromHand(player: Player, card: Card): Card | undefined {
+    const cardIndex = this.findCardInHand(player, card);
     if (cardIndex === undefined) return undefined;
     return player.hand.splice(cardIndex, 1)[0];
+  }
+
+  private addCardToHand(player: Player, card: Card): void {
+    player.hand.push(card);
+  }
+
+  private addSheepToField(player: Player, sheep: Sheep): void {
+    player.field.push(sheep);
+  }
+
+  private removeSheepFromField(
+    player: Player,
+    sheepIndex: number,
+  ): Sheep | undefined {
+    const sheep = player.field[sheepIndex];
+    if (!sheep) {
+      console.error(
+        `Sheep at index ${sheepIndex} not found on player ${player.id}'s field.`,
+      );
+      return undefined;
+    }
+    return player.field.splice(sheepIndex, 1)[0];
   }
 }
 
