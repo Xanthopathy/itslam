@@ -9,6 +9,7 @@ import type {
 } from "./types";
 
 // TODO: Split into multiple files for better organization
+// TODO: use gameLog
 class GameEngine {
   state = $state<GameState>({
     players: [],
@@ -18,6 +19,7 @@ class GameEngine {
     status: "lobby",
     gameLog: [],
     isFinalRound: false,
+    finalRoundTriggeredBy: undefined,
   });
 
   // ========= DECK CREATION & SHUFFLING ==========
@@ -271,6 +273,11 @@ class GameEngine {
           "Cannot discard that many cards, only discard until you're down to 7 cards in hand.",
         );
       }
+    }
+
+    const nextPlayer = this.getNextPlayer();
+    if (nextPlayer) {
+      this.state.currentTurnPlayerId = nextPlayer.id;
     }
   }
 
@@ -701,7 +708,10 @@ class GameEngine {
    * Marks the game as the final round, where everyone gets to play their last turn starting from the emptier.
    */
   private triggerFinalRound(): void {
-    // TODO: Implement
+    if (this.state.isFinalRound) return;
+
+    this.state.isFinalRound = true;
+    this.state.finalRoundTriggeredBy = this.state.currentTurnPlayerId;
   }
 
   /**

@@ -83,6 +83,7 @@ export type GameState = {
   gameLog: GameLogEntry[];
   activeCoinFlip?: CoinFlipState;
   isFinalRound: boolean;
+  finalRoundTriggeredBy?: string;
 };
 
 export type GameLogEntry = {
