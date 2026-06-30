@@ -154,7 +154,7 @@ class GameEngine {
     - Must have exactly 2 parts (head + butt, or 2 heads/butts if Franken)
     - Both parts must be same color, or at least one is rainbow, or Franken modifier present
   */
-  public isValidSheep(sheep: Sheep): boolean {
+  private isValidSheep(sheep: Sheep): boolean {
     if (sheep.parts.length !== 2) return false;
     const [part1, part2] = sheep.parts;
 
@@ -183,7 +183,7 @@ class GameEngine {
    * - Franken: allows mismatched parts (2 heads or 2 butts) (also allows mismatched colors)
    * - Only ONE modifier per sheep
    */
-  public canApplyModifier(sheep: Sheep, modifier: Card): boolean {
+  private canApplyModifier(sheep: Sheep, modifier: Card): boolean {
     if (sheep.modifier || this.isValidSheep(sheep)) return false;
 
     const [part1, part2] = sheep.parts;
@@ -202,7 +202,7 @@ class GameEngine {
   /**
    * Apply modifier to sheep object
    */
-  public applyModifier(sheep: Sheep, modifier: Card): void {
+  private applyModifier(sheep: Sheep, modifier: Card): void {
     sheep.modifier = modifier;
   }
 
@@ -279,13 +279,18 @@ class GameEngine {
     if (nextPlayer) {
       this.state.currentTurnPlayerId = nextPlayer.id;
     }
+
+    if (this.isGameOver()) {
+      this.state.status = "finished";
+    }
   }
 
-  public getCurrentPlayer(): Player | undefined {
+  // Currently unused
+  private getCurrentPlayer(): Player | undefined {
     return this.findPlayerById(this.state.currentTurnPlayerId);
   }
 
-  public getNextPlayer(): Player | undefined {
+  private getNextPlayer(): Player | undefined {
     const currentIndex = this.state.players.findIndex(
       (player) => player.id === this.state.currentTurnPlayerId,
     );
@@ -687,7 +692,7 @@ class GameEngine {
    * - -3 per ITSLAM card in hand
    * Return Record<playerName, score>
    */
-  public getGameScore(): Record<string, number> {
+  private getGameScore(): Record<string, number> {
     const score: Record<string, number> = {};
     this.state.players.forEach((player) => {
       const sheepScore = player.field.reduce(
@@ -718,27 +723,36 @@ class GameEngine {
    * Check if game is over
    * - Final round active + all players have taken final turn
    */
-  public isGameOver(): boolean {
-    // TODO: Implement
-    return false;
+  private isGameOver(): boolean {
+    if (!this.state.isFinalRound) return false;
+
+    if (this.state.finalRoundTriggeredBy === undefined) return false;
+
+    return this.state.currentTurnPlayerId === this.state.finalRoundTriggeredBy;
   }
 
   /**
    * Get winner(s) - player(s) with highest score
    */
-  public getWinner(): Player[] {
-    // TODO: Implement
-    return [];
+  private getWinner(): Player[] {
+    const scores = this.getGameScore();
+
+    const highestScore = Math.max(...Object.values(scores));
+    const winners = this.state.players.filter(
+      (player) => scores[player.name] === highestScore,
+    );
+
+    return winners;
   }
 
   // ========== FIELD QUERIES ==========
-  public getPlayerField(playerId: string): Sheep[] {
+  private getPlayerField(playerId: string): Sheep[] {
     const player = this.findPlayerById(playerId);
     if (!player) return [];
     return player.field;
   }
 
-  public getPlayerHand(playerId: string): Card[] {
+  private getPlayerHand(playerId: string): Card[] {
     const player = this.findPlayerById(playerId);
     if (!player) return [];
     return player.hand;
@@ -748,17 +762,17 @@ class GameEngine {
    * Return a "blind" version of the player's hand, where the cards are face down and only their order is known.
    * This is necessary for Yoink, where the opponent can see the order of cards but not their identities.
    */
-  public getPlayerHandBlind(playerId: string): { count: number } {
+  private getPlayerHandBlind(playerId: string): { count: number } {
     const player = this.findPlayerById(playerId);
     if (!player) return { count: 0 };
     return { count: player.hand.length };
   }
 
-  public getRemainingDeckSize(): number {
+  private getRemainingDeckSize(): number {
     return this.state.drawPile.length;
   }
 
-  public getDiscardPileSize(): number {
+  private getDiscardPileSize(): number {
     return this.state.discardPile.length;
   }
 
