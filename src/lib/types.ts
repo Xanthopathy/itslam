@@ -62,7 +62,7 @@ export type ItslamPhase =
 // Coin has sheep head and butt
 export type CoinFlipState = {
   challengerId: string;
-  defenderId: string;
+  defenderId?: string;
   cardId: string;
   cardName: string;
   phase: ItslamPhase;
@@ -84,6 +84,7 @@ export type GameState = {
   activeCoinFlip?: CoinFlipState;
   isFinalRound: boolean;
   finalRoundTriggeredBy?: string;
+  hostId?: string;
 };
 
 export type GameLogEntry = {

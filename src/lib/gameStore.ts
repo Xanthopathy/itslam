@@ -1,11 +1,15 @@
 // src/lib/gamestore.ts
 import type {
-  GameState,
-  Card,
-  Player,
-  Sheep,
   CardColor,
   CardType,
+  Card,
+  Sheep,
+  Player,
+  GameStatus,
+  ItslamPhase,
+  CoinFlipState,
+  GameState,
+  GameLogEntry,
 } from "./types";
 
 // TODO: Split into multiple files for better organization
@@ -19,12 +23,13 @@ class GameEngine {
     gameLog: [],
     isFinalRound: false,
     finalRoundTriggeredBy: undefined,
+    hostId: undefined,
   });
 
   // ========= DECK CREATION & SHUFFLING ==========
   // IMPORTANT: Because we're using MQTT, the host will be the one to run InitGame() and then send the full deck to all clients. This ensures that all clients have the same deck order and can validate game state independently.
   // The host will broadcast every other RNG event as well.
-  // Make sure to freeze the game if the host disconnects
+  // TODO: Make sure to freeze the game if the host disconnects
   private createInitialDeck(): Card[] {
     const deck: Card[] = [];
     const colors: CardColor[] = [
@@ -112,12 +117,12 @@ class GameEngine {
   }
 
   // Fisher-Yates
-  private shuffle(deck: Card[]): Card[] {
-    for (let i = deck.length - 1; i > 0; i--) {
+  private shuffle<T>(array: T[]): T[] {
+    for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [deck[i], deck[j]] = [deck[j], deck[i]];
+      [array[i], array[j]] = [array[j], array[i]];
     }
-    return deck;
+    return array;
   }
 
   public InitGame(playerNames: string[]): void {
@@ -134,6 +139,7 @@ class GameEngine {
         itslamPlayedThisTurn: false,
       };
     });
+    this.state.hostId = this.state.players[0].id; // First player in the lobby is the host as they created the lobby/game
 
     this.state.players.forEach((player) => {
       for (let i = 0; i < 5; i++) {
@@ -146,6 +152,8 @@ class GameEngine {
 
     this.state.drawPile = fullDeck;
 
+    // Shuffle player-order, then select starting index
+    this.state.players = this.shuffle(this.state.players);
     const randomIndex = Math.floor(Math.random() * this.state.players.length);
     this.state.currentTurnPlayerId = this.state.players[randomIndex].id;
 
@@ -487,6 +495,7 @@ class GameEngine {
     if (!modifier) {
       if (!this.isValidSheep(candidate)) return false;
       this.addSheepToField(player, candidate);
+
       this.log(`${player.name} formed a ${this.describeSheep(candidate)}.`);
       return true;
     }
@@ -494,8 +503,8 @@ class GameEngine {
     if (!this.canApplyModifier(candidate, modifier)) return false;
     this.applyModifier(candidate, modifier);
     this.addSheepToField(player, candidate);
-    this.log(`${player.name} formed a ${this.describeSheep(candidate)}.`);
 
+    this.log(`${player.name} formed a ${this.describeSheep(candidate)}.`);
     return true;
   }
 
@@ -608,11 +617,11 @@ class GameEngine {
       const stolenCard = targetPlayer.hand.splice(idx, 1)[0];
       if (stolenCard) this.addCardToHand(player, stolenCard);
     }
+
     const cardAmt = expectedCount === 1 ? "card" : "cards";
     this.log(
       `${player.name} yoinked ${expectedCount} ${cardAmt} from ${targetPlayer.name}'s hand`,
     );
-
     return true;
   }
 
@@ -631,10 +640,10 @@ class GameEngine {
     if (!sheep) return false;
 
     this.addSheepToField(player, sheep);
+
     this.log(
       `${player.name} lured ${this.describeSheep(sheep)} from ${targetPlayer.name}'s field with Wheat`,
     );
-
     return true;
   }
 
@@ -654,27 +663,14 @@ class GameEngine {
 
     this.state.discardPile.push(...sheep.parts);
     if (sheep.modifier) this.state.discardPile.push(sheep.modifier);
+
     this.log(
       `${targetPlayer.name}'s ${this.describeSheep(sheep)} was eaten by ${player.name}'s Wolf`,
     );
-
     return true;
   }
 
   // ========== ITSLAM CARD HANDLERS ==========
-  /**
-   * !Refactor to be a special action that targets a coin flip
-   * Re-flip: Allow re-rolling an ITSLAM coin flip
-   * - Used in response to ITSLAM card flip result
-   * - ANYONE can play this in response to a coin flip, even if it's not their turn
-   * - Flip result must have ~5 grace period to allow for re-flip to be played
-   * - No limits on usage
-   */
-  private playReFlipCard(player: Player, targetPlayer: Player): boolean {
-    // TODO: Implement
-    return false;
-  }
-
   /**
    * Play ITSLAM card with coin-flip mechanics:
    * 1. Get player's prediction (heads/tails)
@@ -682,14 +678,124 @@ class GameEngine {
    * IMPORTANT: This should be done on the host and sent to all clients for validation
    * 3. Determine winner based on prediction vs result
    * 4. Route to appropriate handler based on card name
+   *
+   * Note: The card is removed from the player's hand when they play it, but the effect is not resolved until after the coin flip and winner determination. The card will be shown on the UI during this limbo, but it's effectively in the discard pile.
    */
   private playItslamCard(
     player: Player,
     card: Card,
-    targetPlayer: Player,
+    targetPlayer?: Player,
   ): boolean {
-    // TODO: Implement
-    return false;
+    if (player.itslamPlayedThisTurn) return false;
+    if (targetPlayer && player.id === targetPlayer?.id) return false;
+
+    this.state.activeCoinFlip = {
+      challengerId: player.id,
+      defenderId: targetPlayer?.id,
+      cardId: card.id,
+      cardName: card.name,
+      phase: "awaiting_prediction",
+      reFlipCount: 0,
+    };
+
+    player.itslamPlayedThisTurn = true;
+    return true;
+  }
+
+  public submitPrediction(
+    playerId: string,
+    prediction: "looking" | "not_looking",
+  ): boolean {
+    if (
+      !this.state.activeCoinFlip ||
+      this.state.activeCoinFlip.phase !== "awaiting_prediction"
+    )
+      return false;
+    if (playerId !== this.state.activeCoinFlip.challengerId) return false;
+
+    this.state.activeCoinFlip.prediction = prediction;
+    this.state.activeCoinFlip.phase = "flipping";
+
+    return true;
+  }
+
+  // This probably shouldn't even live as a method on GameEngine if you want to keep "pure deterministic replay" cleanly separated from "the one random roll." Worth considering: put generateFlipResult in the Svelte component / MQTT layer that's specifically marked as host-only logic, and keep GameEngine itself free of any Math.random() calls except inside createInitialDeck's shuffle (which already gets the same "host computes, broadcasts the result" treatment). That keeps the engine's public API surface = "things that get broadcast and replayed," and nothing inside it secretly rolls dice.
+  public generateFlipResult(): "looking" | "not_looking" {
+    return Math.random() < 0.5 ? "looking" : "not_looking";
+  }
+
+  /**
+   * Host-only call: host generates the actual random result locally,
+   * then broadcasts it via this method so every client (including host) applies the same value
+   */
+  public submitFlipResult(
+    playerId: string,
+    result: "looking" | "not_looking",
+  ): boolean {
+    if (playerId !== this.state.hostId) return false;
+
+    const flip = this.state.activeCoinFlip;
+    if (!flip || flip.phase !== "flipping") return false;
+
+    flip.result = result;
+    flip.graceWindowEndsAt = Date.now() + 5000; // 5 seconds grace period
+    flip.phase = "grace_period";
+
+    return true;
+  }
+
+  private determineFlipWinner(flip: CoinFlipState): string | undefined {
+    const guessedCorrectly = flip.prediction === flip.result;
+
+    return guessedCorrectly
+      ? flip.challengerId
+      : (flip.defenderId ?? undefined);
+  }
+
+  /**
+   * Re-flip: Allow re-rolling an ITSLAM coin flip (targets a coin flip, not a player)
+   * - Used in response to ITSLAM card flip result
+   * - ANYONE can play this in response to a coin flip, even if it's not their turn
+   * - Flip result must have ~5 grace period to allow for re-flip to be played
+   * - No limits on usage (we only have 2 though)
+   */
+  public playReFlipCard(playerId: string, cardId: string): boolean {
+    const flip = this.state.activeCoinFlip;
+    if (!flip || flip.phase !== "grace_period") return false;
+
+    flip.prediction = undefined;
+    flip.result = undefined;
+    flip.winnerId = undefined;
+    flip.graceWindowEndsAt = undefined;
+    flip.reFlipCount += 1;
+    flip.phase = "awaiting_prediction";
+
+    this.log(
+      `${this.findPlayerById(playerId)?.name ?? "A player"} played a Re-flip card! Restarting the prediction phase...`,
+    );
+    return true;
+  }
+
+  public finalizeCoinFlip(playerId: string): void {
+    if (playerId !== this.state.hostId) return;
+
+    const flip = this.state.activeCoinFlip;
+    if (!flip || flip.phase !== "grace_period") return;
+
+    const winner = this.determineFlipWinner(flip);
+    flip.winnerId = winner;
+    flip.phase = "resolved";
+
+    this.log(
+      `Coin flip resolved: ${winner ? this.findPlayerById(winner)?.name : "No one"} won the flip (${flip.prediction} vs ${flip.result})`,
+    );
+  }
+
+  private resolveItslamEffect(
+    playerId: string,
+    sheepIndices?: number[],
+  ): boolean {
+    return true;
   }
 
   /**
@@ -715,9 +821,9 @@ class GameEngine {
   }
 
   /**
-   * Halve 2 sheep: Deconstruct 2 sheep from target's field
-   * - Beneficiary takes 1 part + modifier from each
-   * - Target gets remaining part back to hand
+   * Halve 2 sheep: Deconstruct 2 sheep (max) from target's field
+   * - Beneficiary takes 1 part + modifier from each sheep
+   * - Target gets remaining part back to hand from each sheep
    */
   private handleHalve2Sheep(target: Player): void {
     // TODO: Implement
