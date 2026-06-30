@@ -149,6 +149,12 @@ class GameEngine {
 
     const randomIndex = Math.floor(Math.random() * this.state.players.length);
     this.state.currentTurnPlayerId = this.state.players[randomIndex].id;
+
+    const firstPlayer = this.findPlayerById(this.state.currentTurnPlayerId);
+    if (!firstPlayer) return;
+
+    this.state.status = "playing";
+    this.startTurn(firstPlayer);
   }
 
   /**
@@ -236,17 +242,14 @@ class GameEngine {
    * Start turn: draw until hand >= 3 cards
    * Update currentTurnPlayerId
    */
-  public startTurn(playerId: string): void {
+  private startTurn(player: Player): void {
     if (this.state.status !== "playing") return;
-
-    const player = this.findPlayerById(playerId);
-    if (!player) return;
 
     player.itslamPlayedThisTurn = false;
 
-    this.drawCard(playerId);
+    this.drawCard(player);
     while (player.hand.length < 3 && this.state.drawPile.length > 0) {
-      this.drawCard(playerId);
+      this.drawCard(player);
     }
   }
 
@@ -257,6 +260,7 @@ class GameEngine {
    */
   public endTurn(playerId: string, cardIdsToDiscard: string[]): void {
     if (this.state.status !== "playing") return;
+    if (playerId !== this.state.currentTurnPlayerId) return;
 
     const player = this.findPlayerById(playerId);
     if (!player) return;
@@ -282,13 +286,15 @@ class GameEngine {
     }
 
     const nextPlayer = this.getNextPlayer();
-    if (nextPlayer) {
-      this.state.currentTurnPlayerId = nextPlayer.id;
-    }
+    if (!nextPlayer) return;
+    this.state.currentTurnPlayerId = nextPlayer.id;
 
     if (this.isGameOver()) {
       this.state.status = "finished";
+      return;
     }
+
+    this.startTurn(nextPlayer);
   }
 
   // Currently unused
@@ -311,11 +317,8 @@ class GameEngine {
    * Add to player hand
    * Trigger final round if draw pile empties
    */
-  public drawCard(playerId: string): void {
+  private drawCard(player: Player): void {
     if (this.state.status !== "playing") return;
-
-    const player = this.findPlayerById(playerId);
-    if (!player) return;
 
     if (this.state.drawPile.length === 0) return;
     this.addCardToHand(player, this.state.drawPile.pop() as Card);
@@ -733,7 +736,7 @@ class GameEngine {
    * Check if game is over
    * - Final round active + all players have taken final turn
    */
-  private isGameOver(): boolean {
+  public isGameOver(): boolean {
     if (!this.state.isFinalRound) return false;
 
     if (this.state.finalRoundTriggeredBy === undefined) return false;
@@ -744,7 +747,7 @@ class GameEngine {
   /**
    * Get winner(s) - player(s) with highest score
    */
-  private getWinner(): Player[] {
+  public getWinner(): Player[] {
     const scores = this.getGameScore();
 
     const highestScore = Math.max(...Object.values(scores));
@@ -756,13 +759,13 @@ class GameEngine {
   }
 
   // ========== FIELD QUERIES ==========
-  private getPlayerField(playerId: string): Sheep[] {
+  public getPlayerField(playerId: string): Sheep[] {
     const player = this.findPlayerById(playerId);
     if (!player) return [];
     return player.field;
   }
 
-  private getPlayerHand(playerId: string): Card[] {
+  public getPlayerHand(playerId: string): Card[] {
     const player = this.findPlayerById(playerId);
     if (!player) return [];
     return player.hand;
@@ -772,18 +775,23 @@ class GameEngine {
    * Return a "blind" version of the player's hand, where the cards are face down and only their order is known.
    * This is necessary for Yoink, where the opponent can see the order of cards but not their identities.
    */
-  private getPlayerHandBlind(playerId: string): { count: number } {
+  public getPlayerHandBlind(playerId: string): { count: number } {
     const player = this.findPlayerById(playerId);
     if (!player) return { count: 0 };
     return { count: player.hand.length };
   }
 
-  private getRemainingDeckSize(): number {
+  public getRemainingDeckSize(): number {
     return this.state.drawPile.length;
   }
 
-  private getDiscardPileSize(): number {
+  public getDiscardPileSize(): number {
     return this.state.discardPile.length;
+  }
+
+  // For itslam "Recover 1 sheep"
+  public getDiscardPile(): Card[] {
+    return this.state.discardPile;
   }
 
   // ========== HELPER FUNCTIONS ==========
