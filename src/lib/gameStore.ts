@@ -122,6 +122,8 @@ class GameEngine {
   }
 
   public InitGame(playerNames: string[]): void {
+    if (this.state.status === "playing") return;
+
     const fullDeck = this.shuffle(this.createInitialDeck());
 
     this.state.players = playerNames.map((name, index) => {
@@ -235,6 +237,8 @@ class GameEngine {
    * Update currentTurnPlayerId
    */
   public startTurn(playerId: string): void {
+    if (this.state.status !== "playing") return;
+
     const player = this.findPlayerById(playerId);
     if (!player) return;
 
@@ -252,6 +256,8 @@ class GameEngine {
    * Trigger final round if draw pile empty
    */
   public endTurn(playerId: string, cardIdsToDiscard: string[]): void {
+    if (this.state.status !== "playing") return;
+
     const player = this.findPlayerById(playerId);
     if (!player) return;
 
@@ -306,6 +312,8 @@ class GameEngine {
    * Trigger final round if draw pile empties
    */
   public drawCard(playerId: string): void {
+    if (this.state.status !== "playing") return;
+
     const player = this.findPlayerById(playerId);
     if (!player) return;
 
@@ -346,6 +354,8 @@ class GameEngine {
     targetPartIndex?: number,
     chosenIndices?: number[],
   ): boolean {
+    if (this.state.status !== "playing") return false;
+
     const player = this.findPlayerById(playerId);
     if (!player) return false;
 
