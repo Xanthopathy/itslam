@@ -9,7 +9,6 @@ import type {
 } from "./types";
 
 // TODO: Split into multiple files for better organization
-// TODO: use gameLog
 class GameEngine {
   state = $state<GameState>({
     players: [],
@@ -154,6 +153,7 @@ class GameEngine {
     if (!firstPlayer) return;
 
     this.state.status = "playing";
+    this.log(`Game started! ${firstPlayer.name} goes first`);
     this.startTurn(firstPlayer);
   }
 
@@ -246,10 +246,18 @@ class GameEngine {
     if (this.state.status !== "playing") return;
 
     player.itslamPlayedThisTurn = false;
+    this.log(`It's ${player.name}'s turn`);
 
+    const initialHandSize = player.hand.length;
     this.drawCard(player);
     while (player.hand.length < 3 && this.state.drawPile.length > 0) {
       this.drawCard(player);
+    }
+
+    const drawnCount = player.hand.length - initialHandSize;
+    if (drawnCount > 0) {
+      const cardAmt = drawnCount === 1 ? "card" : "cards";
+      this.log(`${player.name} drew ${drawnCount} ${cardAmt}`);
     }
   }
 
@@ -267,6 +275,7 @@ class GameEngine {
 
     if (player.hand.length > 7) {
       if (player.hand.length - cardIdsToDiscard.length < 7) {
+        let discardedCount = 0;
         for (const cardId of cardIdsToDiscard) {
           const cardIndex = this.findCardIndexById(player, cardId);
           if (cardIndex !== undefined) {
@@ -276,7 +285,14 @@ class GameEngine {
               continue;
             }
             this.discardCard(player, card);
+            discardedCount++;
           }
+        }
+        if (discardedCount > 0) {
+          const cardAmt = discardedCount === 1 ? "card" : "cards";
+          this.log(
+            `${player.name} discarded ${discardedCount} ${cardAmt} due to hand overflow`,
+          );
         }
       } else {
         console.error(
@@ -291,6 +307,16 @@ class GameEngine {
 
     if (this.isGameOver()) {
       this.state.status = "finished";
+      const scores = this.getGameScore();
+      const winners = this.getWinner();
+      const scoreStr = this.state.players
+        .map((p) => `${p.name}: ${scores[p.name]}`)
+        .join(", ");
+      const winnerNames = winners.map((w) => w.name).join(" & ");
+      const verb = winners.length > 1 ? "win" : "wins";
+      this.log(
+        `Game over! ${winnerNames} ${verb} with ${scores[winners[0].name]} points (${scoreStr})`,
+      );
       return;
     }
 
@@ -461,12 +487,14 @@ class GameEngine {
     if (!modifier) {
       if (!this.isValidSheep(candidate)) return false;
       this.addSheepToField(player, candidate);
+      this.log(`${player.name} formed a ${this.describeSheep(candidate)}.`);
       return true;
     }
 
     if (!this.canApplyModifier(candidate, modifier)) return false;
     this.applyModifier(candidate, modifier);
     this.addSheepToField(player, candidate);
+    this.log(`${player.name} formed a ${this.describeSheep(candidate)}.`);
 
     return true;
   }
@@ -513,6 +541,11 @@ class GameEngine {
       this.addCardToHand(player, oldModifier);
     }
 
+    const fieldOwner =
+      targetPlayer.id === player.id ? "their own" : `${targetPlayer.name}'s`;
+    this.log(
+      `${player.name} swapped a ${oldPart.color} ${oldPart.type} on ${fieldOwner} field`,
+    );
     return true;
   }
 
@@ -540,7 +573,7 @@ class GameEngine {
         break;
       case "Wolf":
         if (targetSheepIndex === undefined) return false;
-        success = this.handleWolf(targetPlayer, targetSheepIndex);
+        success = this.handleWolf(player, targetPlayer, targetSheepIndex);
         break;
     }
 
@@ -575,6 +608,10 @@ class GameEngine {
       const stolenCard = targetPlayer.hand.splice(idx, 1)[0];
       if (stolenCard) this.addCardToHand(player, stolenCard);
     }
+    const cardAmt = expectedCount === 1 ? "card" : "cards";
+    this.log(
+      `${player.name} yoinked ${expectedCount} ${cardAmt} from ${targetPlayer.name}'s hand`,
+    );
 
     return true;
   }
@@ -594,6 +631,9 @@ class GameEngine {
     if (!sheep) return false;
 
     this.addSheepToField(player, sheep);
+    this.log(
+      `${player.name} lured ${this.describeSheep(sheep)} from ${targetPlayer.name}'s field with Wheat`,
+    );
 
     return true;
   }
@@ -603,13 +643,20 @@ class GameEngine {
    * - Check isProtectedFromWolf
    * - Send sheep parts + modifier to discard pile
    */
-  private handleWolf(targetPlayer: Player, targetSheepIndex: number): boolean {
+  private handleWolf(
+    player: Player,
+    targetPlayer: Player,
+    targetSheepIndex: number,
+  ): boolean {
     if (this.isFieldProtectedFromWolf(targetPlayer.field)) return false;
     const sheep = this.removeSheepFromField(targetPlayer, targetSheepIndex);
     if (!sheep) return false;
 
     this.state.discardPile.push(...sheep.parts);
     if (sheep.modifier) this.state.discardPile.push(sheep.modifier);
+    this.log(
+      `${targetPlayer.name}'s ${this.describeSheep(sheep)} was eaten by ${player.name}'s Wolf`,
+    );
 
     return true;
   }
@@ -730,6 +777,10 @@ class GameEngine {
 
     this.state.isFinalRound = true;
     this.state.finalRoundTriggeredBy = this.state.currentTurnPlayerId;
+    const trigger = this.findPlayerById(this.state.currentTurnPlayerId);
+    this.log(
+      `The draw pile is empty! ${trigger?.name ?? "A player"} triggered the final round`,
+    );
   }
 
   /**
@@ -846,6 +897,27 @@ class GameEngine {
       return undefined;
     }
     return player.field.splice(sheepIndex, 1)[0];
+  }
+
+  private describeSheep(sheep: Sheep): string {
+    const [part1, part2] = sheep.parts;
+    if (part1.color === part2.color && part1.color === "rainbow")
+      return "Full Rainbow Sheep";
+    else if (sheep.modifier?.name === "Franken") {
+      if (part1.color !== part2.color)
+        return `Franken Sheep (${part1.color} ${part1.type} + ${part2.color} ${part2.type})`;
+      else return `Franken Sheep (2 ${part1.type}s)`;
+    } else if (sheep.modifier?.name === "Paint")
+      return `Painted Sheep (${part1.color} + ${part2.color})`;
+    return `${sheep.parts[0].color} Sheep`;
+  }
+
+  private log(message: string): void {
+    this.state.gameLog.push({
+      id: crypto.randomUUID(),
+      message,
+      timestamp: new Date().toISOString(),
+    });
   }
 }
 

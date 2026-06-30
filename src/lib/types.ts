@@ -88,6 +88,6 @@ export type GameState = {
 
 export type GameLogEntry = {
   id: string;
-  timestamp: number;
+  timestamp: string;
   message: string;
 };
