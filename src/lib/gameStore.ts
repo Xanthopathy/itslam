@@ -393,10 +393,11 @@ class GameEngine {
   ): boolean {
     if (this.state.status !== "playing") return false;
 
+    // validate player
     const player = this.findPlayerById(playerId);
     if (!player) return false;
 
-    // fetch all cards from cardIds
+    // validate cards exist in hand
     const cards: Card[] = [];
     for (const cardId of cardIds) {
       const cardIndex = this.findCardIndexById(player, cardId);
@@ -404,25 +405,41 @@ class GameEngine {
       cards.push(player.hand[cardIndex]);
     }
 
+    // validate target player if provided
     const targetPlayer = targetPlayerId
       ? this.findPlayerById(targetPlayerId)
       : undefined;
     if (targetPlayerId && !targetPlayer) return false;
+
+    // turn gating, reflip as sole exception
+    if (playerId !== this.state.currentTurnPlayerId) {
+      const isReFlip = cards[0]?.name === "ReFlip";
+      const flipInGracePeriod =
+        this.state.activeCoinFlip?.phase === "grace_period";
+      if (!isReFlip || !flipInGracePeriod) return false;
+    }
 
     let success = false;
     switch (cardIds.length) {
       // action, itslam, single-part-swap (playing modifier alone is illegal)
       case 1: {
         const card = cards[0];
-        if (card.type === "action") {
+        if (card.name === "ReFlip") {
+          success = this.playReFlipCard(playerId, card.id);
+          break;
+        } else if (card.type === "action") {
           success = targetPlayer
-            ? this.playActionCard(player, card, targetPlayer)
+            ? this.playActionCard(
+                player,
+                card,
+                targetPlayer,
+                targetSheepIndex,
+                chosenIndices,
+              )
             : false;
           break;
         } else if (card.type === "itslam") {
-          success = targetPlayer
-            ? this.playItslamCard(player, card, targetPlayer)
-            : false;
+          success = this.playItslamCard(player, card, targetPlayer); // no targetPlayer gating for recover 1 sheep
           break;
         } else if (card.type === "head" || card.type === "butt") {
           if (
@@ -439,7 +456,6 @@ class GameEngine {
             card,
           );
           break;
-          // TODO: playReFlipCard()
         } else {
           success = false;
           break;
@@ -477,7 +493,18 @@ class GameEngine {
     }
 
     if (!success) return false;
-    for (const card of cards) this.removeCardFromHand(player, card);
+
+    const isFormOrSwap =
+      cardIds.length >= 2 ||
+      cards[0].type === "head" ||
+      cards[0].type === "butt";
+    if (isFormOrSwap) {
+      // Cards are now in play, don't need to be discarded
+      for (const card of cards) this.removeCardFromHand(player, card);
+    } else {
+      // Discard action/itslam cards
+      for (const card of cards) this.discardCard(player, card);
+    }
 
     return true;
   }
@@ -686,8 +713,10 @@ class GameEngine {
     card: Card,
     targetPlayer?: Player,
   ): boolean {
+    if (this.state.activeCoinFlip) return false;
     if (player.itslamPlayedThisTurn) return false;
     if (targetPlayer && player.id === targetPlayer?.id) return false;
+    if (card.name !== "Recover 1 Sheep" && !targetPlayer) return false;
 
     this.state.activeCoinFlip = {
       challengerId: player.id,
@@ -782,6 +811,9 @@ class GameEngine {
     const flip = this.state.activeCoinFlip;
     if (!flip || flip.phase !== "grace_period") return;
 
+    if (flip.graceWindowEndsAt === undefined) return;
+    if (Date.now() < flip.graceWindowEndsAt) return;
+
     const winner = this.determineFlipWinner(flip);
     flip.winnerId = winner;
     flip.phase = "resolved";
@@ -791,33 +823,97 @@ class GameEngine {
     );
   }
 
-  private resolveItslamEffect(
+  public resolveItslamEffect(
     playerId: string,
     sheepIndices?: number[],
+    discardIndices?: number[],
   ): boolean {
+    const flip = this.state.activeCoinFlip;
+    if (!flip || flip.phase !== "resolved") return false;
+    if (playerId !== flip.winnerId) return false;
+
+    const winner = this.findPlayerById(flip.winnerId);
+    const loserId = flip.defenderId
+      ? flip.winnerId === flip.challengerId
+        ? flip.defenderId
+        : flip.challengerId
+      : undefined;
+    const loser = loserId ? this.findPlayerById(loserId) : undefined;
+    if (!winner) return false;
+
+    switch (flip.cardName) {
+      case "Lure 2 Sheep":
+        if (!loser || !sheepIndices || sheepIndices.length > 2) return false;
+        this.handleLure2Sheep(winner, loser, sheepIndices);
+        break;
+      case "Remove 2 Sheep":
+        if (!loser || !sheepIndices || sheepIndices.length > 2) return false;
+        this.handleRemove2Sheep(loser, sheepIndices);
+        break;
+      case "Yoink Entire Hand":
+        if (!loser) return false;
+        this.handleYoinkEntireHand(winner, loser);
+        break;
+      case "Halve 2 Sheep":
+        if (!loser || !sheepIndices || sheepIndices.length > 2) return false;
+        this.handleHalve2Sheep(winner, loser, sheepIndices);
+        break;
+      case "Recover 1 Sheep":
+        if (
+          !discardIndices ||
+          discardIndices.length < 1 ||
+          discardIndices.length > 3
+        )
+          return false;
+        this.handleRecover1Sheep(winner, discardIndices);
+        break;
+      default:
+        return false;
+    }
+
+    this.state.activeCoinFlip = undefined;
+    return true;
+  }
+
+  private validateSheepIndices(player: Player, indices: number[]): boolean {
+    if (indices.length === 0) return false;
+    const uniqueIndices = new Set(indices);
+    if (uniqueIndices.size !== indices.length) return false;
+    for (const idx of indices) {
+      if (idx < 0 || idx >= player.field.length) return false;
+    }
     return true;
   }
 
   /**
    * Lure 2 sheep: Move 2 sheep from opponent's field to beneficiary's field
    */
-  private handleLure2Sheep(beneficiary: Player, target: Player): void {
+  private handleLure2Sheep(
+    winner: Player,
+    loser: Player,
+    sheepIndices: number[],
+  ): boolean {
+    if (!this.validateSheepIndices(loser, sheepIndices)) return false;
     // TODO: Implement
+    return true;
   }
 
   /**
    * Remove 2 sheep: Send 2 sheep from target's field to discard pile
    * Discard parts + modifiers
    */
-  private handleRemove2Sheep(target: Player): void {
+  private handleRemove2Sheep(loser: Player, sheepIndices: number[]): boolean {
+    if (!this.validateSheepIndices(loser, sheepIndices)) return false;
     // TODO: Implement
+    return true;
   }
 
   /**
    * Yoink entire hand: Transfer all cards from opponent's hand to beneficiary's hand
    */
-  private handleYoinkEntireHand(beneficiary: Player, target: Player): void {
+  private handleYoinkEntireHand(winner: Player, loser: Player): boolean {
     // TODO: Implement
+    return true;
   }
 
   /**
@@ -825,8 +921,13 @@ class GameEngine {
    * - Beneficiary takes 1 part + modifier from each sheep
    * - Target gets remaining part back to hand from each sheep
    */
-  private handleHalve2Sheep(target: Player): void {
+  private handleHalve2Sheep(
+    winner: Player,
+    loser: Player,
+    sheepIndices: number[],
+  ): boolean {
     // TODO: Implement
+    return true;
   }
 
   /**
@@ -834,8 +935,12 @@ class GameEngine {
    * Play it to beneficiary's field
    * Remove from discard pile
    */
-  private handleRecover1Sheep(player: Player): void {
+  private handleRecover1Sheep(
+    winner: Player,
+    discardIndices: number[],
+  ): boolean {
     // TODO: Implement
+    return true;
   }
 
   // ========== SCORING & GAME END ==========
@@ -946,7 +1051,7 @@ class GameEngine {
     return this.state.discardPile.length;
   }
 
-  // For itslam "Recover 1 sheep"
+  // For regular discard pile viewing and itslam "Recover 1 sheep"
   public getDiscardPile(): Card[] {
     return this.state.discardPile;
   }
