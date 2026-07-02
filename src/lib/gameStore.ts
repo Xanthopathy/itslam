@@ -638,11 +638,14 @@ class GameEngine {
       if (idx < 0 || idx >= targetPlayer.hand.length) return false;
     }
 
-    // remove highest index first so earlier indices don't shift
-    const sortedDescending = [...chosenIndices].sort((a, b) => b - a);
-    for (const idx of sortedDescending) {
-      const stolenCard = targetPlayer.hand.splice(idx, 1)[0];
-      if (stolenCard) this.addCardToHand(player, stolenCard);
+    // Snapshot cards in oldest -> newest order before removing anything.
+    const cardsToSteal = [...chosenIndices]
+      .sort((a, b) => a - b)
+      .map((idx) => targetPlayer.hand[idx]);
+
+    for (const card of cardsToSteal) {
+      this.removeCardFromHand(targetPlayer, card);
+      this.addCardToHand(player, card);
     }
 
     const cardAmt = expectedCount === 1 ? "card" : "cards";
@@ -688,8 +691,10 @@ class GameEngine {
     const sheep = this.removeSheepFromField(targetPlayer, targetSheepIndex);
     if (!sheep) return false;
 
-    this.state.discardPile.push(...sheep.parts);
-    if (sheep.modifier) this.state.discardPile.push(sheep.modifier);
+    this.state.discardPile.push(
+      ...(sheep.modifier ? [sheep.modifier] : []),
+      ...sheep.parts,
+    );
 
     this.log(
       `${targetPlayer.name}'s ${this.describeSheep(sheep)} was eaten by ${player.name}'s Wolf`,
@@ -826,12 +831,15 @@ class GameEngine {
   public resolveItslamEffect(
     playerId: string,
     sheepIndices?: number[],
+    targetPartIndices?: number[],
     discardIndices?: number[],
   ): boolean {
+    // validating the coin flip state and winner
     const flip = this.state.activeCoinFlip;
     if (!flip || flip.phase !== "resolved") return false;
     if (playerId !== flip.winnerId) return false;
 
+    // validating the winner and loser players
     const winner = this.findPlayerById(flip.winnerId);
     const loserId = flip.defenderId
       ? flip.winnerId === flip.challengerId
@@ -841,27 +849,50 @@ class GameEngine {
     const loser = loserId ? this.findPlayerById(loserId) : undefined;
     if (!winner) return false;
 
+    // what if lure/remove/halve were played against someone with nothing on the field? it could be a legit tactical play, so the game should still resolve
+    // same deal in the case the player has nothing on their field and loses
+    // therefore no minimum gating
     switch (flip.cardName) {
       case "Lure 2 Sheep":
-        if (!loser || !sheepIndices || sheepIndices.length > 2) return false;
+        if (
+          !loser ||
+          !sheepIndices ||
+          sheepIndices.length > 2 ||
+          !this.validateSheepIndices(loser, sheepIndices)
+        )
+          return false;
         this.handleLure2Sheep(winner, loser, sheepIndices);
         break;
       case "Remove 2 Sheep":
-        if (!loser || !sheepIndices || sheepIndices.length > 2) return false;
-        this.handleRemove2Sheep(loser, sheepIndices);
+        if (
+          !loser ||
+          !sheepIndices ||
+          sheepIndices.length > 2 ||
+          !this.validateSheepIndices(loser, sheepIndices)
+        )
+          return false;
+        this.handleRemove2Sheep(winner, loser, sheepIndices);
         break;
       case "Yoink Entire Hand":
         if (!loser) return false;
         this.handleYoinkEntireHand(winner, loser);
         break;
       case "Halve 2 Sheep":
-        if (!loser || !sheepIndices || sheepIndices.length > 2) return false;
-        this.handleHalve2Sheep(winner, loser, sheepIndices);
+        if (
+          !loser ||
+          !sheepIndices ||
+          sheepIndices.length > 2 ||
+          !targetPartIndices ||
+          targetPartIndices.length !== sheepIndices.length ||
+          !this.validateSheepIndices(loser, sheepIndices)
+        )
+          return false;
+        this.handleHalve2Sheep(winner, loser, sheepIndices, targetPartIndices);
         break;
       case "Recover 1 Sheep":
         if (
           !discardIndices ||
-          discardIndices.length < 1 ||
+          discardIndices.length === 0 ||
           discardIndices.length > 3
         )
           return false;
@@ -886,60 +917,153 @@ class GameEngine {
   }
 
   /**
-   * Lure 2 sheep: Move 2 sheep from opponent's field to beneficiary's field
+   * Lure 2 sheep: Move 2 sheep from loser's field to winner's field
    */
   private handleLure2Sheep(
     winner: Player,
     loser: Player,
     sheepIndices: number[],
   ): boolean {
-    if (!this.validateSheepIndices(loser, sheepIndices)) return false;
-    // TODO: Implement
+    const sheepToLure = [...sheepIndices]
+      .sort((a, b) => b - a)
+      .map((idx) => loser.field[idx]);
+
+    for (const sheep of sheepToLure) {
+      this.removeSheepFromField(loser, loser.field.indexOf(sheep));
+      this.addSheepToField(winner, sheep);
+    }
+
+    this.log(
+      `${winner.name} lured ${sheepToLure.length} sheep from ${loser.name}'s field`,
+    );
     return true;
   }
 
   /**
-   * Remove 2 sheep: Send 2 sheep from target's field to discard pile
+   * Remove 2 sheep: Send 2 sheep from loser's field to discard pile
    * Discard parts + modifiers
    */
-  private handleRemove2Sheep(loser: Player, sheepIndices: number[]): boolean {
-    if (!this.validateSheepIndices(loser, sheepIndices)) return false;
-    // TODO: Implement
+  private handleRemove2Sheep(
+    winner: Player,
+    loser: Player,
+    sheepIndices: number[],
+  ): boolean {
+    const sheepToRemove = [...sheepIndices]
+      .sort((a, b) => b - a) // remove from highest index to lowest to avoid index shifting
+      .map((idx) => loser.field[idx]);
+
+    for (const sheep of sheepToRemove) {
+      this.removeSheepFromField(loser, loser.field.indexOf(sheep));
+      this.state.discardPile.push(
+        ...(sheep.modifier ? [...sheep.parts, sheep.modifier] : sheep.parts),
+      );
+    }
+
+    this.log(
+      `${winner.name} removed ${sheepToRemove.length} sheep from ${loser.name}'s field`,
+    );
     return true;
   }
 
   /**
-   * Yoink entire hand: Transfer all cards from opponent's hand to beneficiary's hand
+   * Yoink entire hand: Transfer all cards from loser's hand to winner's hand
+   * Retains order of cards in both hands (oldest winner -> newest winner -> oldest loser -> newest loser)
    */
   private handleYoinkEntireHand(winner: Player, loser: Player): boolean {
-    // TODO: Implement
+    // loser.hand already has correct order
+    for (const card of loser.hand) {
+      this.removeCardFromHand(loser, card);
+      this.addCardToHand(winner, card);
+    }
+
+    this.log(`${winner.name} yoinked ${loser.name}'s entire hand`);
     return true;
   }
 
   /**
-   * Halve 2 sheep: Deconstruct 2 sheep (max) from target's field
-   * - Beneficiary takes 1 part + modifier from each sheep
-   * - Target gets remaining part back to hand from each sheep
+   * Halve 2 sheep: Deconstruct 2 sheep (max) from loser's field
+   * - Winner takes 1 part + any modifier from each sheep
+   * - Loser (automatically) gets remaining part back to hand from each sheep
    */
   private handleHalve2Sheep(
     winner: Player,
     loser: Player,
     sheepIndices: number[],
+    targetPartIndices: number[],
   ): boolean {
-    // TODO: Implement
+    // validate targetPartIndices: must be 0 or 1, and unique
+    const uniquePartIndices = new Set(targetPartIndices);
+    if (uniquePartIndices.size !== targetPartIndices.length) return false;
+    for (const idx of targetPartIndices) {
+      if (idx < 0 || idx > 1) return false;
+    }
+
+    const sheepToHalve = [...sheepIndices]
+      .sort((a, b) => b - a)
+      .map((idx) => loser.field[idx]);
+
+    for (let i = 0; i < sheepToHalve.length; i++) {
+      const sheep = sheepToHalve[i];
+      const targetPartIndex = targetPartIndices[i];
+
+      // Give the chosen part to the winner (+ any modifier)
+      this.addCardToHand(winner, sheep.parts[targetPartIndex]);
+      if (sheep.modifier) {
+        this.addCardToHand(winner, sheep.modifier);
+        sheep.modifier = undefined;
+      }
+
+      // Return the remaining part to the loser's hand
+      const remainingPartIndex = targetPartIndex === 0 ? 1 : 0;
+      this.addCardToHand(loser, sheep.parts[remainingPartIndex]);
+      this.removeSheepFromField(loser, loser.field.indexOf(sheep));
+    }
+
+    this.log(
+      `${winner.name} halved ${sheepToHalve.length} sheep from ${loser.name}'s field`,
+    );
     return true;
   }
 
   /**
    * Recover 1 sheep: Find any valid sheep combination in discard pile
-   * Play it to beneficiary's field
+   * Play it to winner's field
    * Remove from discard pile
    */
   private handleRecover1Sheep(
     winner: Player,
     discardIndices: number[],
   ): boolean {
-    // TODO: Implement
+    // discardIndices only points to 2-3 cards in the discard pile, need to search for which one is a part and which one is a modifier (if any)
+    const parts = discardIndices
+      .map((idx) => this.state.discardPile[idx])
+      .filter((card) => card.type === "head" || card.type === "butt");
+    if (parts.length < 2) return false;
+
+    let modifier = undefined; // optional, will be set if found
+    if (discardIndices.length === 3) {
+      modifier = discardIndices
+        .map((idx) => this.state.discardPile[idx])
+        .find((card) => card.type === "modifier");
+      if (!modifier) return false;
+    }
+
+    const candidate: Sheep = {
+      parts: parts as [Card, Card],
+      modifier: modifier,
+    };
+    if (!this.isValidSheep(candidate)) return false;
+
+    this.addSheepToField(winner, candidate);
+
+    // Remove the used cards from the discard pile (in reverse order to avoid index shifting)
+    for (const idx of [...discardIndices].sort((a, b) => b - a)) {
+      this.state.discardPile.splice(idx, 1);
+    }
+
+    this.log(
+      `${winner.name} recovered a ${this.describeSheep(candidate)} from the discard pile`,
+    );
     return true;
   }
 
@@ -966,13 +1090,13 @@ class GameEngine {
   private getGameScore(): Record<string, number> {
     const score: Record<string, number> = {};
     this.state.players.forEach((player) => {
-      const sheepScore = player.field.reduce(
+      const sheepcore = player.field.reduce(
         (accumulator, sheep) => accumulator + this.calculateSheepValue(sheep),
         0,
       );
       const itslamPenalty =
         player.hand.filter((card) => card.type === "itslam").length * 3;
-      score[player.name] = sheepScore - itslamPenalty;
+      score[player.name] = sheepcore - itslamPenalty;
     });
     return score;
   }
@@ -1082,6 +1206,10 @@ class GameEngine {
     return this.findCardIndexById(player, card.id);
   }
 
+  /**
+   * Preserves order of cards in hand when removing a card.
+   * Returns the removed card or undefined if not found.
+   */
   private removeCardFromHand(player: Player, card: Card): Card | undefined {
     const cardIndex = this.findCardInHand(player, card);
     if (cardIndex === undefined) return undefined;
