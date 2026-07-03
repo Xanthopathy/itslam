@@ -11,28 +11,6 @@ import {
 import { describeSheep } from "./sheep";
 
 /**
- * Check double-butt Franken protection vs Wheat action
- */
-export function isFieldProtectedFromWheat(field: Sheep[]): boolean {
-  return field.some(
-    (sheep) =>
-      sheep.modifier?.name === "Franken" &&
-      sheep.parts.every((p) => p.type === "butt"),
-  );
-}
-
-/**
- * Check double-head Franken protection vs Wolf action
- */
-export function isFieldProtectedFromWolf(field: Sheep[]): boolean {
-  return field.some(
-    (sheep) =>
-      sheep.modifier?.name === "Franken" &&
-      sheep.parts.every((p) => p.type === "head"),
-  );
-}
-
-/**
  * Route action card to handler
  */
 export function playActionCard(
@@ -63,6 +41,8 @@ export function playActionCard(
 
   return success;
 }
+
+// ========== HANDLERS ==========
 
 /**
  * Yoink: Steal 2 cards face-down from opponent's hand
@@ -152,4 +132,28 @@ export function handleWolf(
     `${targetPlayer.name}'s ${describeSheep(sheep)} was eaten by ${player.name}'s Wolf`,
   );
   return true;
+}
+
+// ========== VALIDATION & UTILITY ==========
+
+/**
+ * Check double-butt Franken protection vs Wheat action
+ */
+export function isFieldProtectedFromWheat(field: Sheep[]): boolean {
+  return field.some(
+    (sheep) =>
+      sheep.modifier?.name === "Franken" &&
+      sheep.parts.every((p) => p.type === "butt"),
+  );
+}
+
+/**
+ * Check double-head Franken protection vs Wolf action
+ */
+export function isFieldProtectedFromWolf(field: Sheep[]): boolean {
+  return field.some(
+    (sheep) =>
+      sheep.modifier?.name === "Franken" &&
+      sheep.parts.every((p) => p.type === "head"),
+  );
 }

@@ -40,6 +40,8 @@ class GameEngine {
     hostId: undefined,
   });
 
+  // ========== GAME LIFECYCLE ==========
+
   // IMPORTANT: Because we're using MQTT, the host will be the one to run InitGame() and then send the full deck to all clients. This ensures that all clients have the same deck order and can validate game state independently.
   // The host will broadcast every other RNG event as well.
   // TODO: Make sure to freeze the game if the host disconnects
@@ -183,6 +185,7 @@ class GameEngine {
   }
 
   // ========== CARD DRAWING & PLAYING ==========
+
   /**
    * Draw card from draw pile
    * Add to player hand
@@ -342,7 +345,7 @@ class GameEngine {
     return true;
   }
 
-  // ================ ITSLAM passthroughs ================
+  // ========== ITSLAM PASSTHROUGHS ==========
 
   public submitPrediction(
     playerId: string,
@@ -381,7 +384,8 @@ class GameEngine {
     );
   }
 
-  // ================ Scoring passthroughs ================
+  // ========== SCORING & STATE PASSTHROUGHS ==========
+
   public isGameOver(): boolean {
     return isGameOver(this.state);
   }
@@ -390,7 +394,7 @@ class GameEngine {
     return getWinner(this.state);
   }
 
-  // ================ Field/hand queries ================
+  // ========== FIELD/HAND QUERIES ==========
 
   public getPlayerField(playerId: string): Sheep[] {
     const player = findPlayerById(this.state, playerId);

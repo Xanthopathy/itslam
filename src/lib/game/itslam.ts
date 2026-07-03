@@ -10,6 +10,8 @@ import {
   validateUniqueIndices,
 } from "./utils";
 
+// ========== INTERACTION FLOW ==========
+
 /**
  * Play ITSLAM card with coin-flip mechanics:
  * 1. Get player's prediction (heads/tails)
@@ -43,6 +45,33 @@ export function playItslamCard(
   player.itslamPlayedThisTurn = true;
   return true;
 }
+
+/**
+ * Re-flip: Allow re-rolling an ITSLAM coin flip (targets a coin flip, not a player)
+ * - Used in response to ITSLAM card flip result
+ * - ANYONE can play this in response to a coin flip, even if it's not their turn
+ * - Flip result must have ~5 grace period to allow for re-flip to be played
+ * - No limits on usage (we only have 2 though)
+ */
+export function playReFlipCard(state: GameState, playerId: string): boolean {
+  const flip = state.activeCoinFlip;
+  if (!flip || flip.phase !== "grace_period") return false;
+
+  flip.prediction = undefined;
+  flip.result = undefined;
+  flip.winnerId = undefined;
+  flip.graceWindowEndsAt = undefined;
+  flip.reFlipCount += 1;
+  flip.phase = "awaiting_prediction";
+
+  log(
+    state,
+    `${findPlayerById(state, playerId)?.name ?? "A player"} played a Re-flip card! Restarting the prediction phase...`,
+  );
+  return true;
+}
+
+// ========== COIN FLIP PROGRESSION ==========
 
 export function submitPrediction(
   state: GameState,
@@ -88,37 +117,6 @@ export function submitFlipResult(
   return true;
 }
 
-export function determineFlipWinner(flip: CoinFlipState): string | undefined {
-  const guessedCorrectly = flip.prediction === flip.result;
-
-  return guessedCorrectly ? flip.challengerId : (flip.defenderId ?? undefined);
-}
-
-/**
- * Re-flip: Allow re-rolling an ITSLAM coin flip (targets a coin flip, not a player)
- * - Used in response to ITSLAM card flip result
- * - ANYONE can play this in response to a coin flip, even if it's not their turn
- * - Flip result must have ~5 grace period to allow for re-flip to be played
- * - No limits on usage (we only have 2 though)
- */
-export function playReFlipCard(state: GameState, playerId: string): boolean {
-  const flip = state.activeCoinFlip;
-  if (!flip || flip.phase !== "grace_period") return false;
-
-  flip.prediction = undefined;
-  flip.result = undefined;
-  flip.winnerId = undefined;
-  flip.graceWindowEndsAt = undefined;
-  flip.reFlipCount += 1;
-  flip.phase = "awaiting_prediction";
-
-  log(
-    state,
-    `${findPlayerById(state, playerId)?.name ?? "A player"} played a Re-flip card! Restarting the prediction phase...`,
-  );
-  return true;
-}
-
 export function finalizeCoinFlip(state: GameState, playerId: string): void {
   if (playerId !== state.hostId) return;
 
@@ -137,6 +135,14 @@ export function finalizeCoinFlip(state: GameState, playerId: string): void {
     `Coin flip resolved: ${winner ? findPlayerById(state, winner)?.name : "No one"} won the flip (${flip.prediction} vs ${flip.result})`,
   );
 }
+
+export function determineFlipWinner(flip: CoinFlipState): string | undefined {
+  const guessedCorrectly = flip.prediction === flip.result;
+
+  return guessedCorrectly ? flip.challengerId : (flip.defenderId ?? undefined);
+}
+
+// ========== EFFECT RESOLUTION ENGINE ==========
 
 export function resolveItslamEffect(
   state: GameState,
@@ -226,6 +232,8 @@ export function resolveItslamEffect(
 
   return true;
 }
+
+// ========== HANDLERS ==========
 
 /**
  * Lure 2 sheep: Move 2 sheep from loser's field to winner's field

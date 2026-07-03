@@ -2,54 +2,7 @@
 import type { Card, GameState, Player, Sheep } from "../types";
 import { addCardToHand, addSheepToField, log } from "./utils";
 
-/**
- * Check if a sheep is valid:
- * - Must have exactly 2 parts (head + butt, or 2 heads/butts if Franken)
- * - Both parts must be same color, or at least one is rainbow, or Franken modifier present
- */
-export function isValidSheep(sheep: Sheep): boolean {
-  if (sheep.parts.length !== 2) return false;
-  const [part1, part2] = sheep.parts;
-
-  const hasPaint = sheep.modifier?.name === "Paint";
-  const hasFranken = sheep.modifier?.name === "Franken";
-  const isCorrectStructure = part1.type !== part2.type; // one head and one butt
-  const isCorrectColor =
-    part1.color === part2.color ||
-    part1.color === "rainbow" ||
-    part2.color === "rainbow";
-
-  const structureIsValid = isCorrectStructure || hasFranken;
-  if (!structureIsValid) return false;
-
-  const colorIsValid = isCorrectColor || hasPaint || hasFranken;
-  if (!colorIsValid) return false;
-
-  return true;
-}
-
-/**
- * Check if modifier can be applied
- * - Modifiers resolve invalid sheep states
- * - Paint: allows mismatched colors
- * - Franken: allows mismatched parts (2 heads or 2 butts) (also allows mismatched colors)
- * - Only ONE modifier per sheep
- */
-export function canApplyModifier(sheep: Sheep, modifier: Card): boolean {
-  if (sheep.modifier || isValidSheep(sheep)) return false;
-
-  const [part1, part2] = sheep.parts;
-  if (
-    modifier.name === "Paint" &&
-    part1.color !== part2.color &&
-    part1.type !== part2.type
-  )
-    return true;
-  else if (modifier.name === "Franken" && part1.type === part2.type)
-    return true;
-
-  return false;
-}
+// ========== CORE ACTIONS ==========
 
 /**
  * Form a sheep from 2 parts and optional modifier
@@ -128,6 +81,57 @@ export function swapSheepPart(
     `${player.name} swapped a ${oldPart.color} ${oldPart.type} on ${fieldOwner} field`,
   );
   return true;
+}
+
+// ========== VALIDATION & UTILITY ==========
+
+/**
+ * Check if a sheep is valid:
+ * - Must have exactly 2 parts (head + butt, or 2 heads/butts if Franken)
+ * - Both parts must be same color, or at least one is rainbow, or Franken modifier present
+ */
+export function isValidSheep(sheep: Sheep): boolean {
+  if (sheep.parts.length !== 2) return false;
+  const [part1, part2] = sheep.parts;
+
+  const hasPaint = sheep.modifier?.name === "Paint";
+  const hasFranken = sheep.modifier?.name === "Franken";
+  const isCorrectStructure = part1.type !== part2.type; // one head and one butt
+  const isCorrectColor =
+    part1.color === part2.color ||
+    part1.color === "rainbow" ||
+    part2.color === "rainbow";
+
+  const structureIsValid = isCorrectStructure || hasFranken;
+  if (!structureIsValid) return false;
+
+  const colorIsValid = isCorrectColor || hasPaint || hasFranken;
+  if (!colorIsValid) return false;
+
+  return true;
+}
+
+/**
+ * Check if modifier can be applied
+ * - Modifiers resolve invalid sheep states
+ * - Paint: allows mismatched colors
+ * - Franken: allows mismatched parts (2 heads or 2 butts) (also allows mismatched colors)
+ * - Only ONE modifier per sheep
+ */
+export function canApplyModifier(sheep: Sheep, modifier: Card): boolean {
+  if (sheep.modifier || isValidSheep(sheep)) return false;
+
+  const [part1, part2] = sheep.parts;
+  if (
+    modifier.name === "Paint" &&
+    part1.color !== part2.color &&
+    part1.type !== part2.type
+  )
+    return true;
+  else if (modifier.name === "Franken" && part1.type === part2.type)
+    return true;
+
+  return false;
 }
 
 export function describeSheep(sheep: Sheep): string {
