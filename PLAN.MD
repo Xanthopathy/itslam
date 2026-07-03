@@ -27,3 +27,7 @@ This project is meant to be a simple web app clone of Zedaph's Is That Sheep Loo
   4. If no ?room= param is present, the normal landing screen shows ("Host Game" / "Join Game with code").
 
 Note: the URL param is purely a convenience wrapper around the existing MQTT join flow — there's no server behind the link, the page just reads the param client-side and auto-fills the room code field before connecting to the broker as usual.
+
+## Shit to consider
+
+- State recovery: if a player refreshes or joins late, there's no server to ask "what's the current game state?" — you'll need late-joiners to either replay the message history (if the broker/topic retains it) or have another client "rebroadcast" full state on join.
