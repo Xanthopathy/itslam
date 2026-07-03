@@ -251,7 +251,7 @@ class GameEngine {
       case 1: {
         const card = cards[0];
         if (card.name === "ReFlip") {
-          success = playReFlipCard(this.state, playerId, card.id);
+          success = playReFlipCard(this.state, playerId);
           break;
         } else if (card.type === "action") {
           success = targetPlayer
@@ -341,6 +341,56 @@ class GameEngine {
 
     return true;
   }
+
+  // ================ ITSLAM passthroughs ================
+
+  public submitPrediction(
+    playerId: string,
+    prediction: "looking" | "not_looking",
+  ): boolean {
+    return submitPrediction(this.state, playerId, prediction);
+  }
+
+  public generateFlipResult(): "looking" | "not_looking" {
+    return generateFlipResult();
+  }
+
+  public submitFlipResult(
+    playerId: string,
+    result: "looking" | "not_looking",
+  ): boolean {
+    return submitFlipResult(this.state, playerId, result);
+  }
+
+  public finalizeCoinFlip(playerId: string): void {
+    finalizeCoinFlip(this.state, playerId);
+  }
+
+  public resolveItslamEffect(
+    playerId: string,
+    sheepIndices?: number[],
+    targetPartIndices?: number[],
+    discardIndices?: number[],
+  ): boolean {
+    return resolveItslamEffect(
+      this.state,
+      playerId,
+      sheepIndices,
+      targetPartIndices,
+      discardIndices,
+    );
+  }
+
+  // ================ Scoring passthroughs ================
+  public isGameOver(): boolean {
+    return isGameOver(this.state);
+  }
+
+  public getWinner() {
+    return getWinner(this.state);
+  }
+
+  // ================ Field/hand queries ================
 
   public getPlayerField(playerId: string): Sheep[] {
     const player = findPlayerById(this.state, playerId);
