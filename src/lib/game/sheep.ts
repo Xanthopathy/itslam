@@ -1,6 +1,6 @@
 // src/lib/game/sheep.ts
-import type { Card, GameState, Player, Sheep } from "../types";
-import { addCardToHand, addSheepToField, log } from "./utils";
+import type { Card, GameState, Player, Sheep } from "$lib/types";
+import { addCardToHand, addSheepToField, log } from "$lib/game/utils";
 
 // ========== CORE ACTIONS ==========
 

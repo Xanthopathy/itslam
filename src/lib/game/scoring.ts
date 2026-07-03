@@ -1,27 +1,18 @@
 // src/lib/game/scoring.ts
-import type { GameState, Player } from "../types";
-import { calculateSheepValue } from "./sheep";
-import { findPlayerById, log } from "./utils";
+import type { GameState, Player } from "$lib/types";
+import { calculateSheepValue } from "$lib/game/sheep";
+import { findPlayerById, log } from "$lib/game/utils";
 
 /**
- * Get game score for all players:
- * - +1 per standard sheep on field
- * - +2 per full rainbow sheep on field
- * - -3 per ITSLAM card in hand
- * Return Record<playerName, score>
+ * Check if game is over
+ * - Final round active + all players have taken final turn
  */
-export function getGameScore(state: GameState): Record<string, number> {
-  const score: Record<string, number> = {};
-  state.players.forEach((player) => {
-    const sheepcore = player.field.reduce(
-      (accumulator, sheep) => accumulator + calculateSheepValue(sheep),
-      0,
-    );
-    const itslamPenalty =
-      player.hand.filter((card) => card.type === "itslam").length * 3;
-    score[player.name] = sheepcore - itslamPenalty;
-  });
-  return score;
+export function isGameOver(state: GameState): boolean {
+  if (!state.isFinalRound) return false;
+
+  if (state.finalRoundTriggeredBy === undefined) return false;
+
+  return state.currentTurnPlayerId === state.finalRoundTriggeredBy;
 }
 
 /**
@@ -43,15 +34,24 @@ export function triggerFinalRound(state: GameState): void {
 }
 
 /**
- * Check if game is over
- * - Final round active + all players have taken final turn
+ * Get game score for all players:
+ * - +1 per standard sheep on field
+ * - +2 per full rainbow sheep on field
+ * - -3 per ITSLAM card in hand
+ * Return Record<playerName, score>
  */
-export function isGameOver(state: GameState): boolean {
-  if (!state.isFinalRound) return false;
-
-  if (state.finalRoundTriggeredBy === undefined) return false;
-
-  return state.currentTurnPlayerId === state.finalRoundTriggeredBy;
+export function getGameScore(state: GameState): Record<string, number> {
+  const score: Record<string, number> = {};
+  state.players.forEach((player) => {
+    const sheepcore = player.field.reduce(
+      (accumulator, sheep) => accumulator + calculateSheepValue(sheep),
+      0,
+    );
+    const itslamPenalty =
+      player.hand.filter((card) => card.type === "itslam").length * 3;
+    score[player.name] = sheepcore - itslamPenalty;
+  });
+  return score;
 }
 
 /**

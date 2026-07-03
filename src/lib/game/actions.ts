@@ -1,5 +1,5 @@
 // src/lib/game/action.ts
-import type { Card, GameState, Player, Sheep } from "../types";
+import type { Card, GameState, Player, Sheep } from "$lib/types";
 import {
   addCardToHand,
   addSheepToField,
@@ -7,8 +7,8 @@ import {
   removeCardFromHand,
   removeSheepFromField,
   validateUniqueIndices,
-} from "./utils";
-import { describeSheep } from "./sheep";
+} from "$lib/game/utils";
+import { describeSheep } from "$lib/game/sheep";
 
 /**
  * Route action card to handler

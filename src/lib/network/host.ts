@@ -1,13 +1,16 @@
-import type { RoomActionMessage } from "./messages";
+// src/lib/network/host.ts
+import type { RoomActionType } from "$lib/network/messages";
 
-export function isHostOnlyAction(
-  actionType: RoomActionMessage["type"],
-): boolean {
-  return actionType === "INIT_GAME" || actionType === "SUBMIT_FLIP_RESULT";
+export function isHostOnlyAction(actionType: RoomActionType): boolean {
+  return (
+    actionType === "INIT_GAME" ||
+    actionType === "SUBMIT_FLIP_RESULT" ||
+    actionType === "FINALIZE_COIN_FLIP"
+  );
 }
 
 export function canPublishAction(
-  actionType: RoomActionMessage["type"],
+  actionType: RoomActionType,
   isHost: boolean,
 ): boolean {
   if (!isHostOnlyAction(actionType)) return true;

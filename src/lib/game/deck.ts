@@ -1,5 +1,5 @@
 // src/lib/game/deck.ts
-import type { Card, CardColor } from "../types";
+import type { Card, CardColor } from "$lib/types";
 
 export function createInitialDeck(): Card[] {
   const deck: Card[] = [];

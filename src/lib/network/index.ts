@@ -1,5 +1,6 @@
-export * from "./client";
-export * from "./host";
-export * from "./messages";
-export * from "./sync";
-export * from "./topics";
+// src/lib/network/index.ts
+export * from "$lib/network/client";
+export * from "$lib/network/host";
+export * from "$lib/network/messages";
+export * from "$lib/network/sync";
+export * from "$lib/network/topics";

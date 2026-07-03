@@ -1,9 +1,10 @@
+// src/lib/network/client.ts
 import {
   decodeMessage,
   encodeMessage,
   type RoomActionMessage,
-} from "./messages";
-import { buildRoomTopic } from "./topics";
+} from "$lib/network/messages";
+import { buildRoomTopic } from "$lib/network/topics";
 
 export type RealtimeAdapter = {
   connect: () => Promise<void>;

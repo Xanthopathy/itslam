@@ -1,7 +1,9 @@
+// src/lib/network/topics.ts
 export const ROOM_TOPIC_PREFIX = "itslam/rooms";
 
 export function buildRoomTopic(roomCode: string): string {
-  return `${ROOM_TOPIC_PREFIX}/${roomCode}`;
+  const sanitized = sanitizeRoomCode(roomCode);
+  return `${ROOM_TOPIC_PREFIX}/${sanitized}`;
 }
 
 export function sanitizeRoomCode(roomCode: string): string {

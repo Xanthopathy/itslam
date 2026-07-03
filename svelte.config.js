@@ -12,7 +12,7 @@ export default {
       strict: true,
     }),
     paths: {
-      base: process.env.NODE_ENV === "production" ? "/your-repo-name" : "",
+      base: process.env.NODE_ENV === "production" ? "/itslam" : "",
     },
   },
 };
