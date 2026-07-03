@@ -101,11 +101,7 @@ export function determineFlipWinner(flip: CoinFlipState): string | undefined {
  * - Flip result must have ~5 grace period to allow for re-flip to be played
  * - No limits on usage (we only have 2 though)
  */
-export function playReFlipCard(
-  state: GameState,
-  playerId: string,
-  cardId: string,
-): boolean {
+export function playReFlipCard(state: GameState, playerId: string): boolean {
   const flip = state.activeCoinFlip;
   if (!flip || flip.phase !== "grace_period") return false;
 

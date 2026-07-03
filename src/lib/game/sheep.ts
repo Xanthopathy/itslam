@@ -52,13 +52,6 @@ export function canApplyModifier(sheep: Sheep, modifier: Card): boolean {
 }
 
 /**
- * Apply modifier to sheep object
- */
-export function applyModifier(sheep: Sheep, modifier: Card): void {
-  sheep.modifier = modifier;
-}
-
-/**
  * Form a sheep from 2 parts and optional modifier
  */
 export function formSheep(
@@ -78,7 +71,7 @@ export function formSheep(
   }
 
   if (!canApplyModifier(candidate, modifier)) return false;
-  applyModifier(candidate, modifier);
+  candidate.modifier = modifier;
   addSheepToField(player, candidate);
 
   log(state, `${player.name} formed a ${describeSheep(candidate)}.`);
