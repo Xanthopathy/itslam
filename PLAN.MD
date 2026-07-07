@@ -64,7 +64,7 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - [ ] **Visuals**: [Card.svelte](src/lib/components/cards/Card.svelte) and [Sheep.svelte](src/lib/components/cards/Sheep.svelte) base components.
 - [ ] **Modals**: [ChaosModal.svelte](src/lib/components/modals/ChaosModal.svelte) (ITSALM) and [GameOverModal.svelte](src/lib/components/modals/GameOverModal.svelte).
 - [ ] **Game Log**: [GameLog.svelte](src/lib/components/game/GameLog.svelte) reactive display.
-- [ ] **Styles**: [global.css](src/styles/global.css) and [colorUtils.ts](src/lib/utils/colorUtils.ts) theming.
+- [ ] **Styles**: [global.css](src/styles/global.css) (Tailwind) and [colorUtils.ts](src/lib/utils/colorUtils.ts) theming.
 
 ### Phase 4: Integration & Polish ⚪
 
