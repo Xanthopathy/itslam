@@ -59,6 +59,7 @@ export function getColorLabel(color?: CardColor): string {
 
 /**
  * Two colors are considered a match if either is rainbow, or if they are the same color.
+ * Overlaps with existing sheep.ts validation, might still be useful for play previews
  */
 export function colorsMatch(a?: CardColor, b?: CardColor): boolean {
   if (!a || !b) return false;
