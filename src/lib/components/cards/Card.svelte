@@ -9,6 +9,7 @@
     disabled?: boolean;
     size?: "sm" | "md" | "lg";
     onClick?: (card: Card) => void;
+    interactive?: boolean;
   };
 
   let {
@@ -17,6 +18,7 @@
     disabled = false,
     size = "md",
     onClick,
+    interactive = true,
   }: Props = $props();
 
   // head/butt cards get their color swatch, everything else gets a fixed per-type look so the hand is easy to scan at a glance
@@ -40,26 +42,48 @@
   }
 </script>
 
-<button
-  type="button"
-  class={[
-    "relative flex flex-col justify-between rounded-lg shadow-md transition-transform",
-    "font-semibold select-none",
-    SIZE_CLASSES[size],
-    isSheepPart ? getColorClasses(card.color) : TYPE_STYLES[card.type],
-    selected ? "ring-4 ring-yellow-300 -translate-y-2" : "hover:-translate-y-1",
-    disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
-  ].join(" ")}
-  onclick={handleClick}
-  {disabled}
-  aria-pressed={selected}
->
-  <span class="uppercase tracking-wide opacity-80">{card.type}</span>
-  <span class="leading-tight">
-    {card.name}
-    {#if isSheepPart}
-      <br />
-      <span class="opacity-80">{getColorLabel(card.color)}</span>
-    {/if}
-  </span>
-</button>
+{#if interactive}
+  <button
+    type="button"
+    class={[
+      "relative flex flex-col justify-between rounded-lg shadow-md transition-transform",
+      "font-semibold select-none",
+      SIZE_CLASSES[size],
+      isSheepPart ? getColorClasses(card.color) : TYPE_STYLES[card.type],
+      selected ? "ring-4 ring-yellow-300 -translate-y-2" : "hover:-translate-y-1",
+      disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+    ].join(" ")}
+    onclick={handleClick}
+    {disabled}
+    aria-pressed={selected}
+  >
+    <span class="uppercase tracking-wide opacity-80">{card.type}</span>
+    <span class="leading-tight">
+      {card.name}
+      {#if isSheepPart}
+        <br />
+        <span class="opacity-80">{getColorLabel(card.color)}</span>
+      {/if}
+    </span>
+  </button>
+{:else}
+  <div
+    class={[
+      "relative flex flex-col justify-between rounded-lg shadow-md transition-transform",
+      "font-semibold select-none",
+      SIZE_CLASSES[size],
+      isSheepPart ? getColorClasses(card.color) : TYPE_STYLES[card.type],
+      selected ? "ring-4 ring-yellow-300 -translate-y-2" : "",
+      disabled ? "opacity-50 cursor-not-allowed" : "",
+    ].join(" ")}
+  >
+    <span class="uppercase tracking-wide opacity-80">{card.type}</span>
+    <span class="leading-tight">
+      {card.name}
+      {#if isSheepPart}
+        <br />
+        <span class="opacity-80">{getColorLabel(card.color)}</span>
+      {/if}
+    </span>
+  </div>
+{/if}
