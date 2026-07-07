@@ -78,3 +78,7 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - Import convention: relative imports (`./`, `../`) within `src/lib`; use `$lib/...` only from outside `src/lib` (components/routes).
 - `types.ts` and `gamestore.ts` intentionally stay at `src/lib/` (not under `game/`) — they're the public surface; `game/*` is internal, only imported by `gamestore.ts`.
 - Author has limited familiarity with the codebase/TypeScript generally — prefer explaining _why_, not just handing over code, and flag design decisions rather than assuming silently.
+
+### Other notes
+
+- Make a museum for reviewing graphics
