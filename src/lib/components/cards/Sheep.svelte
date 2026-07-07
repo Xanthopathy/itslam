@@ -13,10 +13,10 @@
     size?: "sm" | "md" | "lg";
     onClick?: (sheep: Sheep) => void;
     // Set instead of onClick when targeting a single part (e.g. swapSheepPart's
-    // targetPartIndex). Mutually exclusive with onClick in practice — a given
+    // targetPartIndex). Mutually exclusive with onClick in practice - a given
     // interaction is either "pick a sheep" or "pick a part," never both.
     onPartClick?: (partIndex: 0 | 1) => void;
-    // Only set by a parent that's actively resolving a Wolf/Wheat play —
+    // Only set by a parent that's actively resolving a Wolf/Wheat play -
     // NOT computed here, and NOT shown by default.
     protectedFrom?: "wolf" | "wheat" | null;
   };
