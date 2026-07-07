@@ -86,7 +86,6 @@
     class={[
       "relative flex flex-col items-center gap-1 rounded-xl p-2",
       isValid ? "bg-white/60" : "bg-red-100 ring-2 ring-red-400",
-      onPartClick ? "" : "",
     ].join(" ")}
     role="group"
     title={label}
