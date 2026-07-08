@@ -184,6 +184,10 @@ class GameEngine {
     return this.state.players[nextIndex];
   }
 
+  public getCurrentTurnPlayerName(): string | undefined {
+    return findPlayerById(this.state, this.state.currentTurnPlayerId)?.name;
+  }
+
   // ========== CARD DRAWING & PLAYING ==========
 
   /**

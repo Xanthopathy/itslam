@@ -1,7 +1,6 @@
 <script lang="ts">
   // src/lib/components/game/GameBoard.svelte
   import { gameEngine } from "$lib/gameStore";
-  import type { Card } from "$lib/types";
   import PlayerHand from "./PlayerHand.svelte";
   import PlayerField from "./PlayerField.svelte";
 
@@ -11,9 +10,9 @@
 
   let { localPlayerId }: Props = $props();
 
-  const state = $derived(gameEngine.state);
-  const localPlayer = $derived(
-    state.players.find((p) => p.id === localPlayerId),
+  const gameState = gameEngine.state;
+  let localPlayer = $derived(
+    gameState.players.find((p) => p.id === localPlayerId),
   );
 
   // A play that's selected but that needs a target before it can be committed.
@@ -22,7 +21,7 @@
     cardIds: string[];
     mode: "player-target" | "sheep-target" | "part-target";
   };
-  let pendingPlay = $state<PendingPlay | null>(null);
+  let pendingPlay: PendingPlay | null = $state(null);
 
   function handleHandPlay(cardIds: string[]) {
     if (!localPlayer) return;
@@ -61,4 +60,120 @@
       }
     }
   }
+
+  function cancelPendingPlay() {
+    pendingPlay = null;
+  }
+
+  // Committed once a target player is clicked (Yoink, or 4/5 itslam cards).
+  function handlePlayerTarget(targetPlayerId: string) {
+    if (!pendingPlay) return;
+    gameEngine.playCards(localPlayerId, pendingPlay.cardIds, targetPlayerId);
+    pendingPlay = null;
+  }
+
+  // Committed once a specific sheep is clicked (Wolf, Wheat).
+  function handleSheepTarget(targetPlayerId: string, sheepIndex: number) {
+    if (!pendingPlay) return;
+    gameEngine.playCards(
+      localPlayerId,
+      pendingPlay.cardIds,
+      targetPlayerId,
+      sheepIndex,
+    );
+    pendingPlay = null;
+  }
+
+  // Committed once a specific part within a sheep is clicked (head/butt swap).
+  function handlePartTarget(
+    targetPlayerId: string,
+    sheepIndex: number,
+    partIndex: 0 | 1,
+  ) {
+    if (!pendingPlay) return;
+    gameEngine.playCards(
+      localPlayerId,
+      pendingPlay.cardIds,
+      targetPlayerId,
+      sheepIndex,
+      partIndex,
+    );
+    pendingPlay = null;
+  }
 </script>
+
+{#if gameState.status === "playing" && localPlayer}
+  <div class="flex flex-col gap-4 p-4">
+    <!-- turn indicator + piles -->
+    <div class="flex justify-between items-center text-sm text-gray-600">
+      <span>
+        {#if gameState.currentTurnPlayerId === localPlayerId}
+          <strong class="text-green-700">Your turn</strong>
+        {:else}
+          Waiting on {gameEngine.getCurrentTurnPlayerName()}
+        {/if}
+      </span>
+      <span
+        >Draw pile: {gameState.drawPile.length} | Discard: {gameState.discardPile
+          .length}</span
+      >
+    </div>
+
+    <!-- targetting banner, only visible mid-target-selection -->
+    {#if pendingPlay}
+      <div
+        class="flex items-center justify-between bg-yellow-100 border border-yellow-300 rounded-md px-3 py-2 text-sm"
+      >
+        <span>
+          {#if pendingPlay.mode === "player-target"}
+            Choose a player to target.
+          {:else if pendingPlay.mode === "sheep-target"}
+            Choose a sheep to target.
+          {:else}
+            Choose which part to swap.
+          {/if}
+        </span>
+        <button
+          type="button"
+          class="underline text-gray-600 hover:text-black"
+          onclick={cancelPendingPlay}
+        >
+          Cancel
+        </button>
+      </div>
+    {/if}
+
+    <!-- all player fields, including your own -->
+    <div class="flex flex-col gap-4">
+      {#each gameState.players as player (player.id)}
+        <PlayerField
+          playerName={player.id === localPlayerId ? "You" : player.name}
+          field={player.field}
+          onSelectAsTarget={pendingPlay?.mode === "player-target"
+            ? () => handlePlayerTarget(player.id)
+            : undefined}
+          onSheepClick={pendingPlay?.mode === "sheep-target"
+            ? (sheepIndex) => handleSheepTarget(player.id, sheepIndex)
+            : undefined}
+          onPartClick={pendingPlay?.mode === "part-target"
+            ? (sheepIndex, partIndex) =>
+                handlePartTarget(player.id, sheepIndex, partIndex)
+            : undefined}
+        />
+      {/each}
+    </div>
+
+    <!-- your hand -->
+    <PlayerHand
+      cards={localPlayer.hand}
+      onPlay={handleHandPlay}
+      disabled={pendingPlay !== null}
+    />
+  </div>
+{:else if gameState.status === "lobby"}
+  <p class="text-center text-gray-500 p-8">Waiting for the game to start...</p>
+{:else if gameState.status === "finished"}
+  <p class="text-center text-gray-500 p-8">
+    Game over! (GameOverModal goes here)
+  </p>
+{/if}
