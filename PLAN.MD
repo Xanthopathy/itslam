@@ -43,7 +43,7 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - [x] **Sheep Logic** ([src/lib/game/sheep.ts](src/lib/game/sheep.ts)): Validity, modifiers, value calculation.
 - [x] **Action Cards** ([src/lib/game/actions.ts](src/lib/game/actions.ts)): Handlers for Yoink, Wheat, Wolf, and Franken checks.
 - [x] **ITSLAM! Mechanic** ([src/lib/game/itslam.ts](src/lib/game/itslam.ts)): Full coin-flip lifecycle and effect handlers (Lure/Remove/Yoink/etc).
-- [x] **Scoring & Lifecycle** ([src/lib/game/scoring.ts](src/lib/game/scoring.ts)): Game over checks and winner calculation.
+- [x] **Scoring & Lifecycle** ([src/lib/game/scoring.ts](src/lib/game/scoring.ts)): Game over checks, winner calculation, and final-round handoff timing.
 - [x] **Orchestrator** ([src/lib/gameStore.ts](src/lib/gameStore.ts)): Svelte `$state` management and public API surface.
 
 ### Phase 2: Networking & Multiplayer 🟡
@@ -59,12 +59,12 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 ### Phase 3: Frontend & Components 🔴
 
 - [ ] **Lobby/Landing**: [LobbyModal.svelte](src/lib/components/modals/LobbyModal.svelte) for Host/Join screen.
-- [ ] **GameBoard**: [GameBoard.svelte](src/lib/components/game/GameBoard.svelte) main layout.
-- [ ] **Player Interaction**: [PlayerHand.svelte](src/lib/components/game/PlayerHand.svelte) and [PlayerField.svelte](src/lib/components/game/PlayerField.svelte).
-- [ ] **Visuals**: [Card.svelte](src/lib/components/cards/Card.svelte) and [Sheep.svelte](src/lib/components/cards/Sheep.svelte) base components.
-- [ ] **Modals**: [ChaosModal.svelte](src/lib/components/modals/ChaosModal.svelte) (ITSALM) and [GameOverModal.svelte](src/lib/components/modals/GameOverModal.svelte).
-- [ ] **Game Log**: [GameLog.svelte](src/lib/components/game/GameLog.svelte) reactive display.
-- [ ] **Styles**: [global.css](src/styles/global.css) (Tailwind) and [colorUtils.ts](src/lib/utils/colorUtils.ts) theming.
+- [x] **GameBoard**: [GameBoard.svelte](src/lib/components/game/GameBoard.svelte) main layout.
+- [x] **Player Interaction**: [PlayerHand.svelte](src/lib/components/game/PlayerHand.svelte) and [PlayerField.svelte](src/lib/components/game/PlayerField.svelte).
+- [x] **Visuals**: [Card.svelte](src/lib/components/cards/Card.svelte) and [Sheep.svelte](src/lib/components/cards/Sheep.svelte) base components.
+- [x] **Modals**: [ChaosModal.svelte](src/lib/components/modals/ChaosModal.svelte) (ITSALM) and [GameOverModal.svelte](src/lib/components/modals/GameOverModal.svelte).
+- [x] **Game Log**: [GameLog.svelte](src/lib/components/game/GameLog.svelte) reactive display.
+- [x] **Styles**: [global.css](src/styles/global.css) (Tailwind) and [colorUtils.ts](src/lib/utils/colorUtils.ts) theming.
 
 ### Phase 4: Integration & Polish ⚪
 
