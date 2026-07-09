@@ -4,6 +4,7 @@
   import PlayerHand from "$lib/components/game/PlayerHand.svelte";
   import PlayerField from "$lib/components/game/PlayerField.svelte";
   import ChaosModal from "$lib/components/modals/ChaosModal.svelte";
+  import GameLog from "$lib/components/game/GameLog.svelte";
 
   type Props = {
     localPlayerId: string;
@@ -140,6 +141,8 @@
           .discardPile.length}</span
       >
     </div>
+
+    <GameLog />
 
     <!-- targetting banner, only visible mid-target-selection -->
     {#if pendingPlay}
