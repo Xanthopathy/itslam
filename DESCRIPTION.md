@@ -67,7 +67,7 @@ Order of events: A player picks their opponent -> The player makes a prediction 
 
 ## Game End and Scoring
 
-Once the draw pile runs out, a final round is triggered where everyone gets one last turn. The final round begins after the player who emptied the deck ends their turn, allowing themselves to play another turn after everyone else has had their own last turns.
+Once the draw pile runs out, a final round is triggered where everyone gets one last turn. When the draw pile empties, the final-round marker is placed on the next player in turn order. That means the player who drew the last card still finishes their current turn normally, and then gets their final-round turn when play loops back around to them.
 
 Scoring:
 

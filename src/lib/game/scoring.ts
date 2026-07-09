@@ -18,18 +18,25 @@ export function isGameOver(state: GameState): boolean {
 /**
  * Trigger final round when draw pile empties
  * Mark game state as in final round
- * The final round starts with the player who emptied the draw pile
- * Marks the game as the final round, where everyone gets to play their last turn starting from the emptier.
+ * The final round marker is shifted to the next player so the drawer who emptied
+ * the pile still gets a normal turn now, then gets their final-round turn once
+ * play loops back around.
  */
 export function triggerFinalRound(state: GameState): void {
   if (state.isFinalRound) return;
 
   state.isFinalRound = true;
-  state.finalRoundTriggeredBy = state.currentTurnPlayerId;
+  const currentIndex = state.players.findIndex(
+    (player) => player.id === state.currentTurnPlayerId,
+  );
+  const nextIndex =
+    currentIndex === -1 ? -1 : (currentIndex + 1) % state.players.length;
+  state.finalRoundTriggeredBy =
+    nextIndex === -1 ? state.currentTurnPlayerId : state.players[nextIndex]?.id;
   const trigger = findPlayerById(state, state.currentTurnPlayerId);
   log(
     state,
-    `The draw pile is empty! ${trigger?.name ?? "A player"} triggered the final round`,
+    `The draw pile is empty! ${trigger?.name ?? "A player"} set up the final round`,
   );
 }
 
