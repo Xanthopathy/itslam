@@ -191,7 +191,7 @@
         {/if}
       {:else if flip.phase === "flipping"}
         <div class="text-5xl animate-spin">🪙 [coin]</div>
-        <p class="">Flipping the coin...</p>
+        <p class="text-sm text-gray-600">Flipping the coin...</p>
       {:else if flip.phase === "grace_period"}
         <div class="text-5xl">
           {flip.result === "looking" ? "[heat]" : "[butt]"}
@@ -202,10 +202,106 @@
           > at you
         </p>
         <p class="text-xs text-gray-500">
-          Anyone can play Re-flip in the next {secondsLeft}s...
+          Anyone can play ReFlip in the next {secondsLeft}s...
         </p>
       {:else if flip.phase === "resolved"}
-        <p class="text-sm text-gray-600">resolved UI goes here</p>
+        {#if !isWinner}
+          <p class="text-sm text-gray-600">
+            {gameState.players.find((p) => p.id === flip.winnerId)?.name ??
+              "No one"} won the flip and is resolving the effect...
+          </p>
+        {:else}
+          <p class="text-sm text-gray-600">
+            You won! Resolving: {flip.cardName}
+          </p>
+
+          {#if flip.cardName === "Yoink Entire Hand"}
+            <button
+              type="button"
+              class="px-4 py-2 rounded-md bg-blue-700 text-white font-semibold hover:bg-blue-800"
+              onclick={resolveYoink}
+            >
+              Take {loser?.name}'s hand
+            </button>
+          {:else if flip.cardName === "Lure 2 Sheep" || flip.cardName === "Remove 2 Sheep"}
+            <p class="text-xs text-gray-500">
+              Pick up to 2 sheep from {loser?.name}'s field ({selectedSheepIndices.length}/2)
+            </p>
+            <div class="flex gap-2 flex-wrap justify-center max-w-full">
+              {#each loser?.field ?? [] as sheep, index (index)}
+                <div
+                  class={selectedSheepIndices.includes(index)
+                    ? "ring-4 ring-yellow-300 rounded-xl"
+                    : ""}
+                >
+                  <SheepComponent
+                    {sheep}
+                    size="sm"
+                    onClick={() => toggleSheepIndex(index)}
+                  />
+                </div>
+              {/each}
+            </div>
+            <button
+              type="button"
+              class="px-4 py-2 rounded-md bg-blue-700 text-white font-semibold hover:bg-blue-800 disabled:opacity-40"
+              onclick={resolveSheepIndices}
+            >
+              Confirm
+            </button>
+          {:else if flip.cardName === "Halve 2 Sheep"}
+            <p class="text-xs text-gray-500">
+              Pick up to 2 parts from {loser?.name}'s sheep to take ({selectedSheepIndices.length}/2)
+            </p>
+            <div class="flex gap-2 flex-wrap justify-center max-w-full">
+              {#each loser?.field ?? [] as sheep, index (index)}
+                <div
+                  class={selectedSheepIndices.includes(index)
+                    ? "ring-4 ring-yellow-300 rounded-xl"
+                    : ""}
+                >
+                  <SheepComponent
+                    {sheep}
+                    size="sm"
+                    onPartClick={(partIndex) =>
+                      togglePartSelection(index, partIndex)}
+                  />
+                </div>
+              {/each}
+            </div>
+            <button
+              type="button"
+              class="px-4 py-2 rounded-md bg-blue-700 text-white font-semibold hover:bg-blue-800 disabled:opacity-40"
+              onclick={resolveHalve}
+            >
+              Confirm
+            </button>
+          {:else if flip.cardName === "Recover 1 Sheep"}
+            <p class="text-xs text-gray-500">
+              Pick 2-3 cards from the discard pile that form a valid sheep ({selectedDiscardIndices.length}/3)
+            </p>
+            <div
+              class="flex gap-2 flex-wrap justify-center max-w-full max-h-40 overflow-y-auto"
+            >
+              {#each gameState.discardPile as card, index (index)}
+                <CardComponent
+                  {card}
+                  size="sm"
+                  selected={selectedDiscardIndices.includes(index)}
+                  onClick={() => toggleDiscardIndex(index)}
+                />
+              {/each}
+            </div>
+            <button
+              type="button"
+              class="px-4 py-2 rounded-md bg-blue-700 text-white font-semibold hover:bg-blue-800 disabled:opacity-40"
+              disabled={selectedDiscardIndices.length < 2}
+              onclick={resolveRecover}
+            >
+              Confirm
+            </button>
+          {/if}
+        {/if}
       {/if}
     </div>
   </div>

@@ -1,8 +1,9 @@
 <script lang="ts">
   // src/lib/components/game/GameBoard.svelte
   import { gameEngine } from "$lib/gameStore";
-  import PlayerHand from "./PlayerHand.svelte";
-  import PlayerField from "./PlayerField.svelte";
+  import PlayerHand from "$lib/components/game/PlayerHand.svelte";
+  import PlayerField from "$lib/components/game/PlayerField.svelte";
+  import ChaosModal from "$lib/components/modals/ChaosModal.svelte";
 
   type Props = {
     localPlayerId: string;
@@ -22,6 +23,25 @@
     mode: "player-target" | "sheep-target" | "part-target";
   };
   let pendingPlay: PendingPlay | null = $state(null);
+
+  // Set to true only when the player has clicked "End Turn" with a hand
+  // over 7 - not just whenever hand.length > 7, since they're free to keep
+  // playing cards during the turn instead of discarding right away.
+  let awaitingDiscard = $state(false);
+
+  function attemptEndTurn() {
+    if (!localPlayer) return;
+    if (localPlayer.hand.length > 7) {
+      awaitingDiscard = true;
+      return;
+    }
+    gameEngine.endTurn(localPlayerId, []);
+  }
+
+  function handleDiscard(cardIds: string[]) {
+    gameEngine.endTurn(localPlayerId, cardIds);
+    awaitingDiscard = false;
+  }
 
   function handleHandPlay(cardIds: string[]) {
     if (!localPlayer) return;
@@ -103,6 +123,8 @@
 </script>
 
 {#if gameState.status === "playing" && localPlayer}
+  <ChaosModal {localPlayerId} />
+
   <div class="flex flex-col gap-4 p-4">
     <!-- turn indicator + piles -->
     <div class="flex justify-between items-center text-sm text-gray-600">
@@ -114,8 +136,8 @@
         {/if}
       </span>
       <span
-        >Draw pile: {gameState.drawPile.length} | Discard: {gameState.discardPile
-          .length}</span
+        >Draw pile: {gameState.drawPile.length} | Discard: {gameState
+          .discardPile.length}</span
       >
     </div>
 
@@ -143,6 +165,17 @@
       </div>
     {/if}
 
+    <!-- discard banner, only visible once End Turn is clicked hand > 7 -->
+    {#if awaitingDiscard}
+      <div
+        class="flex items-center justify-between bg-red-100 border border-red-300 rounded-md px-3 py-2 text-sm"
+      >
+        <span
+          >You have more than 7 cards. Discard down to 7 to end your turn.</span
+        >
+      </div>
+    {/if}
+
     <!-- all player fields, including your own -->
     <div class="flex flex-col gap-4">
       {#each gameState.players as player (player.id)}
@@ -167,8 +200,23 @@
     <PlayerHand
       cards={localPlayer.hand}
       onPlay={handleHandPlay}
+      onDiscard={handleDiscard}
+      mode={awaitingDiscard ? "discard" : "play"}
       disabled={pendingPlay !== null}
     />
+
+    <!-- end turn, only on your turn and not mid-target-selection -->
+    {#if gameState.currentTurnPlayerId === localPlayerId && !pendingPlay && !awaitingDiscard}
+      <div class="flex justify-center">
+        <button
+          type="button"
+          class="px-4 py-2 rounded-md bg-blue-700 text-white font-semibold hover:bg-blue-800"
+          onclick={attemptEndTurn}
+        >
+          End Turn (Baa!)
+        </button>
+      </div>
+    {/if}
   </div>
 {:else if gameState.status === "lobby"}
   <p class="text-center text-gray-500 p-8">Waiting for the game to start...</p>
