@@ -43,13 +43,13 @@ export function triggerFinalRound(state: GameState): void {
 export function getGameScore(state: GameState): Record<string, number> {
   const score: Record<string, number> = {};
   state.players.forEach((player) => {
-    const sheepcore = player.field.reduce(
+    const sheepScore = player.field.reduce(
       (accumulator, sheep) => accumulator + calculateSheepValue(sheep),
       0,
     );
     const itslamPenalty =
       player.hand.filter((card) => card.type === "itslam").length * 3;
-    score[player.name] = sheepcore - itslamPenalty;
+    score[player.name] = sheepScore - itslamPenalty;
   });
   return score;
 }

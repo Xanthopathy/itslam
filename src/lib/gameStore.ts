@@ -394,8 +394,12 @@ class GameEngine {
     return isGameOver(this.state);
   }
 
-  public getWinner() {
+  public getWinner(): Player[] {
     return getWinner(this.state);
+  }
+
+  public getGameScore(): Record<string, number> {
+    return getGameScore(this.state);
   }
 
   // ========== FIELD/HAND QUERIES ==========
