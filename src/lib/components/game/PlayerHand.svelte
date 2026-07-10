@@ -1,7 +1,7 @@
 <script lang="ts">
   // src/lib/components/game/PlayerHand.svelte
-  import type { Card } from "$lib/types";
-  import CardComponent from "$lib/components/cards/Card.svelte";
+  import type { Card } from "../../types";
+  import CardComponent from "../cards/Card.svelte";
 
   type Props = {
     cards: Card[];

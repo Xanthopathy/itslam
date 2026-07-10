@@ -1,6 +1,6 @@
 // src/lib/game/itslam.ts
-import type { Card, CoinFlipState, GameState, Player, Sheep } from "$lib/types";
-import { describeSheep, isValidSheep } from "$lib/game/sheep";
+import type { Card, CoinFlipState, GameState, Player, Sheep } from "../types";
+import { describeSheep, isValidSheep } from "./sheep";
 import {
   addCardToHand,
   addSheepToField,
@@ -8,7 +8,7 @@ import {
   log,
   removeSheepFromField,
   validateUniqueIndices,
-} from "$lib/game/utils";
+} from "./utils";
 
 // ========== INTERACTION FLOW ==========
 

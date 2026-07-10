@@ -3,8 +3,8 @@ import {
   decodeMessage,
   encodeMessage,
   type RoomActionMessage,
-} from "$lib/network/messages";
-import { buildRoomTopic } from "$lib/network/topics";
+} from "./messages";
+import { buildRoomTopic } from "./topics";
 
 export type RealtimeAdapter = {
   connect: () => Promise<void>;

@@ -1,10 +1,10 @@
 <script lang="ts">
   // src/lib/components/game/GameBoard.svelte
-  import { gameEngine } from "$lib/gameStore";
-  import PlayerHand from "$lib/components/game/PlayerHand.svelte";
-  import PlayerField from "$lib/components/game/PlayerField.svelte";
-  import ChaosModal from "$lib/components/modals/ChaosModal.svelte";
-  import GameLog from "$lib/components/game/GameLog.svelte";
+  import { gameEngine } from "../../gameStore";
+  import PlayerHand from "./PlayerHand.svelte";
+  import PlayerField from "./PlayerField.svelte";
+  import ChaosModal from "../modals/ChaosModal.svelte";
+  import GameLog from "./GameLog.svelte";
 
   type Props = {
     localPlayerId: string;

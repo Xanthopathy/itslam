@@ -1,12 +1,12 @@
 <script lang="ts">
   // src/lib/components/cards/Sheep.svelte
-  import type { Sheep } from "$lib/types";
+  import type { Sheep } from "../../types";
   import Card from "./Card.svelte";
   import {
     calculateSheepValue,
     isValidSheep,
     describeSheep,
-  } from "$lib/game/sheep";
+  } from "../../game/sheep";
 
   type Props = {
     sheep: Sheep;

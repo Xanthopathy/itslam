@@ -1,5 +1,5 @@
 // src/lib/network/sync.ts
-import type { RoomActionMessage } from "$lib/network/messages";
+import type { RoomActionMessage } from "./messages";
 
 export type RoomActionHandler = (message: RoomActionMessage) => void;
 

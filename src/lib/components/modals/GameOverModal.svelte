@@ -1,7 +1,6 @@
 <script lang="ts">
   // src/lib/components/modals/GameOverModal.svelte
-  import { gameEngine } from "$lib/gameStore";
-  import { ppid } from "process";
+  import { gameEngine } from "../../gameStore";
 
   type Props = {
     localPlayerId: string;

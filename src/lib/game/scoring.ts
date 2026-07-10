@@ -1,7 +1,7 @@
 // src/lib/game/scoring.ts
-import type { GameState, Player } from "$lib/types";
-import { calculateSheepValue } from "$lib/game/sheep";
-import { findPlayerById, log } from "$lib/game/utils";
+import type { GameState, Player } from "../types";
+import { calculateSheepValue } from "./sheep";
+import { findPlayerById, log } from "./utils";
 
 /**
  * Check if game is over

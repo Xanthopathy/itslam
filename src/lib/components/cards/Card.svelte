@@ -1,7 +1,7 @@
 <script lang="ts">
   // src/lib/components/cards/Card.svelte
-  import type { Card } from "$lib/types";
-  import { getColorClasses, getColorLabel } from "$lib/utils/colorUtils";
+  import type { Card } from "../../types";
+  import { getColorClasses, getColorLabel } from "../../utils/colorUtils";
 
   type Props = {
     card: Card;
@@ -50,7 +50,9 @@
       "font-semibold select-none",
       SIZE_CLASSES[size],
       isSheepPart ? getColorClasses(card.color) : TYPE_STYLES[card.type],
-      selected ? "ring-4 ring-yellow-300 -translate-y-2" : "hover:-translate-y-1",
+      selected
+        ? "ring-4 ring-yellow-300 -translate-y-2"
+        : "hover:-translate-y-1",
       disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
     ].join(" ")}
     onclick={handleClick}

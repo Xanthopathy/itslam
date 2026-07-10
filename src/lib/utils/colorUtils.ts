@@ -1,5 +1,5 @@
 // src/lib/utils/colorUtils.ts
-import type { CardColor } from "$lib/types";
+import type { CardColor } from "../types";
 
 /**
  * Tailwind background + text classes per color

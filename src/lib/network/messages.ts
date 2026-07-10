@@ -1,5 +1,5 @@
 // src/lib/network/messages.ts
-import type { GameState } from "$lib/types";
+import type { GameState } from "../types";
 
 export type RoomAction =
   | { type: "INIT_GAME"; payload: { playerNames: string[] } }

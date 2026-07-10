@@ -1,8 +1,8 @@
 // src/lib/gamestore.ts
-import type { Card, GameState, Player, Sheep } from "$lib/types";
-import { createInitialDeck, shuffle } from "$lib/game/deck";
-import { formSheep, swapSheepPart } from "$lib/game/sheep";
-import { playActionCard } from "$lib/game/actions";
+import type { Card, GameState, Player, Sheep } from "./types";
+import { createInitialDeck, shuffle } from "./game/deck";
+import { formSheep, swapSheepPart } from "./game/sheep";
+import { playActionCard } from "./game/actions";
 import {
   finalizeCoinFlip,
   generateFlipResult,
@@ -11,13 +11,13 @@ import {
   resolveItslamEffect,
   submitFlipResult,
   submitPrediction,
-} from "$lib/game/itslam";
+} from "./game/itslam";
 import {
   getGameScore,
   getWinner,
   isGameOver,
   triggerFinalRound,
-} from "$lib/game/scoring";
+} from "./game/scoring";
 import {
   addCardToHand,
   discardCard,
@@ -25,7 +25,7 @@ import {
   findPlayerById,
   log,
   removeCardFromHand,
-} from "$lib/game/utils";
+} from "./game/utils";
 
 class GameEngine {
   state = $state<GameState>({

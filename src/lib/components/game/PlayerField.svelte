@@ -1,7 +1,7 @@
 <script lang="ts">
   // src/lib/components/game/PlayerField.svelte
-  import type { Sheep } from "$lib/types";
-  import SheepComponent from "$lib/components/cards/Sheep.svelte";
+  import type { Sheep } from "../../types";
+  import SheepComponent from "../cards/Sheep.svelte";
 
   type Props = {
     playerName: string;

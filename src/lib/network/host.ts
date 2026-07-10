@@ -1,5 +1,5 @@
 // src/lib/network/host.ts
-import type { RoomActionType } from "$lib/network/messages";
+import type { RoomActionType } from "./messages";
 
 export function isHostOnlyAction(actionType: RoomActionType): boolean {
   return (

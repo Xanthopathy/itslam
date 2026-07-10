@@ -1,5 +1,5 @@
 // src/lib/game/utils.ts
-import type { Card, GameState, Player, Sheep } from "$lib/types";
+import type { Card, GameState, Player, Sheep } from "../types";
 
 // ========== MISC / SHARED ==========
 

@@ -1,8 +1,8 @@
 <script lang="ts">
   // src/lib/components/modals/ChaosModal.svelte
-  import { gameEngine } from "$lib/gameStore";
-  import CardComponent from "$lib/components/cards/Card.svelte";
-  import SheepComponent from "$lib/components/cards/Sheep.svelte";
+  import { gameEngine } from "../../gameStore";
+  import CardComponent from "../cards/Card.svelte";
+  import SheepComponent from "../cards/Sheep.svelte";
 
   type Props = {
     localPlayerId: string;
