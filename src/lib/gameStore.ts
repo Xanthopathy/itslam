@@ -45,15 +45,15 @@ class GameEngine {
   // IMPORTANT: Because we're using MQTT, the host will be the one to run InitGame() and then send the full deck to all clients. This ensures that all clients have the same deck order and can validate game state independently.
   // The host will broadcast every other RNG event as well.
   // TODO: Make sure to freeze the game if the host disconnects
-  public InitGame(playerNames: string[]): void {
+  public InitGame(players: { id: string; name: string }[]): void {
     if (this.state.status === "playing") return;
 
     const fullDeck = shuffle(createInitialDeck());
 
-    this.state.players = playerNames.map((name, index) => {
+    this.state.players = players.map(({ id, name }) => {
       return {
-        id: `player-${index + 1}`,
-        name: name,
+        id,
+        name,
         hand: [],
         field: [],
         itslamPlayedThisTurn: false,

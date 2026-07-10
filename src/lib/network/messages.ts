@@ -31,7 +31,11 @@ export type RoomAction =
         discardIndices?: number[];
       };
     }
-  | { type: "SYNC_STATE"; payload: { state: GameState } };
+  | { type: "SYNC_STATE"; payload: { state: GameState } }
+  | {
+      type: "PLAYER_JOINED";
+      payload: { playerName: string };
+    };
 
 export type RoomActionType = RoomAction["type"];
 
@@ -50,6 +54,7 @@ const VALID_ACTION_TYPES = new Set<RoomActionType>([
   "FINALIZE_COIN_FLIP",
   "RESOLVE_ITSLAM",
   "SYNC_STATE",
+  "PLAYER_JOINED",
 ]);
 
 // can add full runtime payload validation per action but we're high-trust rn
