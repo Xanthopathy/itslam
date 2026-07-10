@@ -51,7 +51,7 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - [x] **Message Schema** ([src/lib/network/messages.ts](src/lib/network/messages.ts)): JSON action types and encoding/decoding.
 - [x] **Topic & URL Logic** ([src/lib/network/topics.ts](src/lib/network/topics.ts)): Room code generation and `?room=` URL parsing.
 - [x] **Security/Roles** ([src/lib/network/host.ts](src/lib/network/host.ts)): Gating sensitive actions (INIT, FLIP_RESULT) to host-only.
-- [ ] **MQTT Adapter**: Real implementation using HiveMQ/EMQX over WSS.
+- [ ] **MQTT Adapter**: Real implementation using HiveMQ/EMQX over WSS. (Temporarily using a stand-in for testing)
 - [ ] **Action Dispatcher**: Wiring incoming MQTT messages to trigger `gameStore` methods.
 - [ ] **Echo Guard** ([src/lib/network/sync.ts](src/lib/network/sync.ts)): Prevent clients from double-applying their own sent actions.
 - [ ] **State Recovery**: Implementation of `SYNC_STATE` for late-joiners/refreshers.
