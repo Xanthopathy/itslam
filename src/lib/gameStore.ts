@@ -42,6 +42,10 @@ class GameEngine {
 
   // ========== GAME LIFECYCLE ==========
 
+  public loadState(newState: GameState): void {
+    this.state = newState;
+  }
+
   // IMPORTANT: Because we're using MQTT, the host will be the one to run InitGame() and then send the full deck to all clients. This ensures that all clients have the same deck order and can validate game state independently.
   // The host will broadcast every other RNG event as well.
   // TODO: Make sure to freeze the game if the host disconnects
