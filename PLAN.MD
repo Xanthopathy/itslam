@@ -37,7 +37,7 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 
 ## Implementation Roadmap
 
-### Phase 1: Core Game Engine 🟢
+### Phase 1: Core Game Engine [DONE]
 
 - [x] **Deck & Setup** ([src/lib/game/deck.ts](src/lib/game/deck.ts)): Creation and shuffling logic.
 - [x] **Sheep Logic** ([src/lib/game/sheep.ts](src/lib/game/sheep.ts)): Validity, modifiers, value calculation.
@@ -46,7 +46,7 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - [x] **Scoring & Lifecycle** ([src/lib/game/scoring.ts](src/lib/game/scoring.ts)): Game over checks, winner calculation, and final-round handoff timing.
 - [x] **Orchestrator** ([src/lib/gameStore.ts](src/lib/gameStore.ts)): Svelte `$state` management and public API surface.
 
-### Phase 2: Networking & Multiplayer 🟡
+### Phase 2: Networking & Multiplayer [IN_PROGRESS]
 
 - [x] **Message Schema** ([src/lib/network/messages.ts](src/lib/network/messages.ts)): JSON action types and encoding/decoding.
 - [x] **Topic & URL Logic** ([src/lib/network/topics.ts](src/lib/network/topics.ts)): Room code generation and `?room=` URL parsing.
@@ -56,9 +56,10 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - [ ] **Echo Guard** ([src/lib/network/sync.ts](src/lib/network/sync.ts)): Prevent clients from double-applying their own sent actions.
 - [ ] **State Recovery**: Implementation of `SYNC_STATE` for late-joiners/refreshers.
 
-### Phase 3: Frontend & Components 🔴
+### Phase 3: Frontend & Components [DONE]
 
-- [ ] **Lobby/Landing**: [LobbyModal.svelte](src/lib/components/modals/LobbyModal.svelte) for Host/Join screen.
+- [x] **Lobby/Landing**: [LobbyModal.svelte](src/lib/components/modals/LobbyModal.svelte) for Host/Join screen.
+- [x] **Shell & Layout**: [+layout.svelte](src/routes/+layout.svelte) and [+page.svelte](src/routes/+page.svelte) root mounting.
 - [x] **GameBoard**: [GameBoard.svelte](src/lib/components/game/GameBoard.svelte) main layout.
 - [x] **Player Interaction**: [PlayerHand.svelte](src/lib/components/game/PlayerHand.svelte) and [PlayerField.svelte](src/lib/components/game/PlayerField.svelte).
 - [x] **Visuals**: [Card.svelte](src/lib/components/cards/Card.svelte) and [Sheep.svelte](src/lib/components/cards/Sheep.svelte) base components.
@@ -66,7 +67,7 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - [x] **Game Log**: [GameLog.svelte](src/lib/components/game/GameLog.svelte) reactive display.
 - [x] **Styles**: [global.css](src/styles/global.css) (Tailwind) and [colorUtils.ts](src/lib/utils/colorUtils.ts) theming.
 
-### Phase 4: Integration & Polish ⚪
+### Phase 4: Integration & Polish [NOT_STARTED]
 
 - [ ] **Auto-Join Flow**: Wire room-code-from-URL into the mount lifecycle.
 - [ ] **Host Presence**: Handling "Game Frozen" states if the host disconnects.
