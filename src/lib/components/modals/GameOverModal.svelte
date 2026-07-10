@@ -32,7 +32,9 @@
 
   function playAgain() {
     // Re-init with the same players, same seats, fresh deck/hands
-    gameEngine.InitGame(gameState.players.map((p) => p.name));
+    gameEngine.InitGame(
+      gameState.players.map((p) => ({ id: p.id, name: p.name })),
+    );
   }
 </script>
 
