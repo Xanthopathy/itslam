@@ -2,12 +2,8 @@
 //
 // Centralizes "call gameEngine AND publish it to the room" so components
 // don't each need their own networking glue. Every mutating action still
-// calls gameEngine directly (local apply), and ALSO publishes - this is a
-// deliberate choice, not a placeholder: BroadcastChannel doesn't echo a
-// client's own publish back to itself, so publish-only would mean your own
-// actions never take effect locally. Once the real MQTT adapter is wired in
-// (which likely DOES echo), the echo-guard step (next up) is what prevents
-// a double-apply of these same local actions.
+// calls gameEngine directly (local apply), and ALSO publishes so local state
+// updates immediately without waiting on network round-trips.
 import { gameEngine, getGameStateSnapshot } from "../gameStore.svelte";
 import { NetworkClient } from "./client";
 import { canPublishAction } from "./host";

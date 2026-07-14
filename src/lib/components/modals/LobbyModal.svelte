@@ -178,8 +178,8 @@
         }),
       );
 
-      // BroadcastChannel doesn't echo our own publish back to us - add
-      // ourselves locally rather than waiting for a message that won't arrive
+      // Add ourselves immediately so the waiting-room list updates even
+      // before our own join event arrives over the network.
       upsertJoinedPlayer(localPlayerId, name);
 
       await networkClient.publishToRoom({
