@@ -44,7 +44,7 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - [x] **Action Cards** ([src/lib/game/actions.ts](src/lib/game/actions.ts)): Handlers for Yoink, Wheat, Wolf, and Franken checks.
 - [x] **ITSLAM! Mechanic** ([src/lib/game/itslam.ts](src/lib/game/itslam.ts)): Full coin-flip lifecycle and effect handlers (Lure/Remove/Yoink/etc).
 - [x] **Scoring & Lifecycle** ([src/lib/game/scoring.ts](src/lib/game/scoring.ts)): Game over checks, winner calculation, and final-round handoff timing.
-- [x] **Orchestrator** ([src/lib/gameStore.ts](src/lib/gameStore.ts)): Svelte `$state` management and public API surface.
+- [x] **Orchestrator** ([src/lib/gameStore.svelte.ts](src/lib/gameStore.svelte.ts)): Svelte `$state` management and public API surface.
 
 ### Phase 2: Networking & Multiplayer [IN_PROGRESS]
 
@@ -52,7 +52,7 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - [x] **Topic & URL Logic** ([src/lib/network/topics.ts](src/lib/network/topics.ts)): Room code generation and `?room=` URL parsing.
 - [x] **Security/Roles** ([src/lib/network/host.ts](src/lib/network/host.ts)): Gating sensitive actions (INIT, FLIP_RESULT) to host-only.
 - [ ] **MQTT Adapter**: Real implementation using HiveMQ/EMQX over WSS. (Temporarily using a stand-in for testing)
-- [ ] **Action Dispatcher**: Wiring incoming MQTT messages to trigger `gameStore` methods.
+- [x] **Action Dispatcher**: Wiring incoming MQTT messages to trigger `gameStore` methods.
 - [ ] **Echo Guard** ([src/lib/network/sync.ts](src/lib/network/sync.ts)): Prevent clients from double-applying their own sent actions.
 - [ ] **State Recovery**: Implementation of `SYNC_STATE` for late-joiners/refreshers.
 
@@ -67,9 +67,9 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - [x] **Game Log**: [GameLog.svelte](src/lib/components/game/GameLog.svelte) reactive display.
 - [x] **Styles**: [global.css](src/styles/global.css) (Tailwind) and [colorUtils.ts](src/lib/utils/colorUtils.ts) theming.
 
-### Phase 4: Integration & Polish [NOT_STARTED]
+### Phase 4: Integration & Polish [IN_PROGRESS]
 
-- [ ] **Auto-Join Flow**: Wire room-code-from-URL into the mount lifecycle.
+- [x] **Auto-Join Flow**: Wire room-code-from-URL into the mount lifecycle.
 - [ ] **Host Presence**: Handling "Game Frozen" states if the host disconnects.
 - [ ] **Game Helpers**: [gameHelper.ts](src/lib/utils/gameHelper.ts) and [keyboard.ts](src/lib/utils/keyboard.ts) for UX shortcuts.
 - [ ] **Visual Feedback**: Card animations, state transitions, and styling refinements.
@@ -77,7 +77,7 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 ### Notes for a fresh chat picking this up
 
 - Import convention: relative imports (`./`, `../`) within `src/lib`; use `$lib/...` only from outside `src/lib` (components/routes).
-- `types.ts` and `gamestore.ts` intentionally stay at `src/lib/` (not under `game/`) — they're the public surface; `game/*` is internal, only imported by `gamestore.ts`.
+- `types.ts` and `gamestore.svelte.ts` intentionally stay at `src/lib/` (not under `game/`) — they're the public surface; `game/*` is internal, only imported by `gamestore.svelte.ts`.
 - Author has limited familiarity with the codebase/TypeScript generally — prefer explaining _why_, not just handing over code, and flag design decisions rather than assuming silently.
 
 ### Other notes

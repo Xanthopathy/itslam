@@ -1,6 +1,6 @@
 <script lang="ts">
   // src/routes/+page.svelte
-  import { gameEngine } from "$lib/gameStore";
+  import { gameEngine } from "$lib/gameStore.svelte";
   import LobbyModal from "$lib/components/modals/LobbyModal.svelte";
   import GameBoard from "$lib/components/game/GameBoard.svelte";
   import { NetworkClient } from "$lib/network/client";

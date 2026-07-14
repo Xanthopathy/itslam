@@ -1,6 +1,6 @@
 <script lang="ts">
   // src/lib/components/modals/ChaosModal.svelte
-  import { gameEngine } from "../../gameStore";
+  import { gameEngine } from "../../gameStore.svelte";
   import CardComponent from "../cards/Card.svelte";
   import SheepComponent from "../cards/Sheep.svelte";
   import type { Dispatcher } from "../../network/dispatcher";

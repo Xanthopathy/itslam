@@ -1,6 +1,6 @@
 <script lang="ts">
   // src/lib/components/modals/LobbyModal.svelte
-  import { gameEngine } from "../../gameStore";
+  import { gameEngine } from "../../gameStore.svelte";
   import { NetworkClient } from "../../network/client";
   import {
     createRoomCode,

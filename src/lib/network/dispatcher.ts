@@ -8,7 +8,7 @@
 // actions never take effect locally. Once the real MQTT adapter is wired in
 // (which likely DOES echo), the echo-guard step (next up) is what prevents
 // a double-apply of these same local actions.
-import { gameEngine } from "../gameStore";
+import { gameEngine } from "../gameStore.svelte";
 import { NetworkClient } from "./client";
 import { canPublishAction } from "./host";
 import type { RoomAction, RoomActionMessage } from "./messages";
@@ -35,11 +35,26 @@ export function createDispatcher(
     });
   }
 
+  async function awaitSyncState(): Promise<void> {
+    await networkClient.publishToRoom({
+      type: "SYNC_STATE",
+      payload: { state: $state.snapshot(gameEngine.state) },
+      roomCode,
+      playerId: localPlayerId,
+      sentAt: Date.now(),
+    });
+  }
+
   /**
    * Applies an action received FROM ANOTHER CLIENT to local gameEngine state. This is the other half of "apply locally + publish" - each client's local action is applied via the direct gameEngine call at the call site (see GameBoard/ChaosModal), while this function is what makes everyone ELSE'S actions take effect on your client.
    */
-  function applyIncoming(message: RoomActionMessage): void {
+  async function applyIncoming(message: RoomActionMessage): Promise<void> {
     switch (message.type) {
+      case "PLAYER_JOINED":
+        if (isHost() && gameEngine.state.status === "playing") {
+          void awaitSyncState(); // void to avoid unhandled promise warning
+        }
+        break;
       case "PLAY_CARDS":
         gameEngine.playCards(
           message.playerId,

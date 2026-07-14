@@ -1,6 +1,6 @@
 <script lang="ts">
   // src/lib/components/game/GameBoard.svelte
-  import { gameEngine } from "../../gameStore";
+  import { gameEngine } from "../../gameStore.svelte";
   import PlayerHand from "./PlayerHand.svelte";
   import PlayerField from "./PlayerField.svelte";
   import ChaosModal from "../modals/ChaosModal.svelte";

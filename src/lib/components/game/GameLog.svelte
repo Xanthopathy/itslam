@@ -1,6 +1,6 @@
 <script lang="ts">
   // src/lib/components/game/GameLog.svelte
-  import { gameEngine } from "../../gameStore";
+  import { gameEngine } from "../../gameStore.svelte";
 
   const gameState = gameEngine.state;
 
