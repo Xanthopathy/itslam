@@ -15,6 +15,7 @@ export type RealtimeAdapter = {
 
 export class NetworkClient {
   private readonly adapter: RealtimeAdapter;
+  private connectionPromise: Promise<void> | undefined;
   private readonly handlers = new Map<
     string,
     Set<(message: RoomActionMessage) => void>
@@ -26,11 +27,18 @@ export class NetworkClient {
   }
 
   public async connect(): Promise<void> {
-    await this.adapter.connect();
+    if (!this.connectionPromise) {
+      this.connectionPromise = this.adapter.connect().catch((error) => {
+        this.connectionPromise = undefined;
+        throw error;
+      });
+    }
+    await this.connectionPromise;
   }
 
   public async disconnect(): Promise<void> {
     await this.adapter.disconnect();
+    this.connectionPromise = undefined;
     this.handlers.clear();
     this.subscribedTopics.clear();
   }
@@ -46,6 +54,8 @@ export class NetworkClient {
       topicHandlers = new Set();
       this.handlers.set(topic, topicHandlers);
     }
+
+    topicHandlers.add(onMessage);
 
     if (!this.subscribedTopics.has(topic)) {
       this.subscribedTopics.add(topic);

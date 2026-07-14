@@ -35,7 +35,8 @@ export type RoomAction =
   | {
       type: "PLAYER_JOINED";
       payload: { playerName: string };
-    };
+    }
+  | { type: "PLAYER_LIST_REQUEST"; payload: Record<string, never> };
 
 export type RoomActionType = RoomAction["type"];
 
@@ -55,6 +56,7 @@ const VALID_ACTION_TYPES = new Set<RoomActionType>([
   "RESOLVE_ITSLAM",
   "SYNC_STATE",
   "PLAYER_JOINED",
+  "PLAYER_LIST_REQUEST",
 ]);
 
 // can add full runtime payload validation per action but we're high-trust rn

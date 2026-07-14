@@ -27,5 +27,8 @@
   },
   "overrides": {
     "cookie": "^0.7.0"
+  },
+  "dependencies": {
+    "mqtt": "^5.15.2"
   }
 }

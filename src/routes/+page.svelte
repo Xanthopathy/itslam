@@ -4,7 +4,7 @@
   import LobbyModal from "$lib/components/modals/LobbyModal.svelte";
   import GameBoard from "$lib/components/game/GameBoard.svelte";
   import { NetworkClient } from "$lib/network/client";
-  import { createBroadcastChannelAdapter } from "$lib/network/adapters/broadcastChannelAdapter";
+  import { createMqttAdapter } from "$lib/network/adapters/mqttAdapter";
   import { createDispatcher } from "$lib/network/dispatcher";
 
   const gameState = gameEngine.state;
@@ -26,7 +26,7 @@
 
   // Owned here, not in LobbyModal - GameBoard/ChaosModal need this same
   // connected client and room code after the handoff, not a fresh one.
-  const networkClient = new NetworkClient(createBroadcastChannelAdapter());
+  const networkClient = new NetworkClient(createMqttAdapter());
   let roomCode = $state("");
 
   const isHost = $derived(gameState.hostId === localPlayerId);
@@ -41,8 +41,20 @@
   // set up during join, only lasts until it unmounts post-handoff).
   $effect(() => {
     if (!roomCode || !dispatcher) return;
-    networkClient.subscribeToRoom(roomCode, dispatcher.applyIncoming);
+    let active = true;
+
+    void (async () => {
+      try {
+        await networkClient.connect();
+        if (!active) return;
+        await networkClient.subscribeToRoom(roomCode, dispatcher.applyIncoming);
+      } catch (error) {
+        console.error("Unable to connect to the game room:", error);
+      }
+    })();
+
     return () => {
+      active = false;
       networkClient.unsubscribeFromRoom(roomCode, dispatcher.applyIncoming);
     };
   });

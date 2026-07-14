@@ -1,5 +1,6 @@
 <script lang="ts">
   // src/lib/components/modals/LobbyModal.svelte
+  import { pushState } from "$app/navigation";
   import { gameEngine } from "../../gameStore.svelte";
   import { NetworkClient } from "../../network/client";
   import {
@@ -24,6 +25,7 @@
   }: Props = $props();
 
   const gameState = gameEngine.state;
+  const LOBBY_SESSION_KEY = "itslam_lobby_session";
 
   type Screen = "landing" | "enter-name" | "waiting-room";
   let screen = $state<Screen>("landing");
@@ -40,8 +42,34 @@
   $effect(() => {
     const detected = parseRoomCodeFromUrl(new URL(window.location.href));
     if (detected) {
+      const savedSession = localStorage.getItem(LOBBY_SESSION_KEY);
+      let isReturningHost = false;
+
+      if (savedSession) {
+        try {
+          const session = JSON.parse(savedSession) as {
+            playerId?: string;
+            roomCode?: string;
+            isHosting?: boolean;
+            playerName?: string;
+          };
+          isReturningHost =
+            session.playerId === localPlayerId &&
+            session.roomCode === detected &&
+            session.isHosting === true;
+          if (isReturningHost && session.playerName) {
+            playerNameInput = session.playerName;
+            setTimeout(() => {
+              if (isHosting && screen === "enter-name") void submitName();
+            }, 0);
+          }
+        } catch {
+          localStorage.removeItem(LOBBY_SESSION_KEY);
+        }
+      }
+
       roomCode = detected;
-      isHosting = false;
+      isHosting = isReturningHost;
       screen = "enter-name";
     }
   });
@@ -49,11 +77,19 @@
   function hostGame() {
     roomCode = createRoomCode();
     isHosting = true;
+    localStorage.setItem(
+      LOBBY_SESSION_KEY,
+      JSON.stringify({
+        playerId: localPlayerId,
+        roomCode,
+        isHosting: true,
+      }),
+    );
     // Reflect the room in the URL so it can be shared as a link, without
     // a page reload - per PLAN.MD's "Room Joining via Shareable Link".
     const url = new URL(window.location.href);
     url.searchParams.set("room", roomCode);
-    history.pushState({}, "", url);
+    pushState(`${url.pathname}${url.search}${url.hash}`, {});
     screen = "enter-name";
   }
 
@@ -69,12 +105,25 @@
         ...joinedPlayers,
         { id: message.playerId, name: message.payload.playerName },
       ];
+    } else if (message.type === "PLAYER_LIST_REQUEST") {
+      const name = playerNameInput.trim();
+      if (name) void publishPlayerJoined(name);
     } else if (message.type === "SYNC_STATE") {
       // Once this lands, state.players is populated
       // and the root page's `me` lookup (by localPlayerId) resolves,
       // which is what actually transitions away from this modal.
       gameEngine.loadState(message.payload.state);
     }
+  }
+
+  async function publishPlayerJoined(name: string): Promise<void> {
+    await networkClient.publishToRoom({
+      type: "PLAYER_JOINED",
+      payload: { playerName: name },
+      roomCode,
+      playerId: localPlayerId,
+      sentAt: Date.now(),
+    });
   }
 
   async function submitName() {
@@ -90,17 +139,29 @@
     await networkClient.connect();
     await networkClient.subscribeToRoom(roomCode, handleIncomingMessage);
 
-    await networkClient.publishToRoom({
-      type: "PLAYER_JOINED",
-      payload: { playerName: name },
-      roomCode,
-      playerId: localPlayerId,
-      sentAt: Date.now(),
-    });
+    await publishPlayerJoined(name);
+
+    localStorage.setItem(
+      LOBBY_SESSION_KEY,
+      JSON.stringify({
+        playerId: localPlayerId,
+        roomCode,
+        isHosting,
+        playerName: name,
+      }),
+    );
 
     // BroadcastChannel doesn't echo our own publish back to us - add
     // ourselves locally rather than waiting for a message that won't arrive
     joinedPlayers = [...joinedPlayers, { id: localPlayerId, name }];
+
+    await networkClient.publishToRoom({
+      type: "PLAYER_LIST_REQUEST",
+      payload: {},
+      roomCode,
+      playerId: localPlayerId,
+      sentAt: Date.now(),
+    });
 
     screen = "waiting-room";
   }
