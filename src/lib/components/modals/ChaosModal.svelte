@@ -3,12 +3,14 @@
   import { gameEngine } from "../../gameStore";
   import CardComponent from "../cards/Card.svelte";
   import SheepComponent from "../cards/Sheep.svelte";
+  import type { Dispatcher } from "../../network/dispatcher";
 
   type Props = {
     localPlayerId: string;
+    dispatcher: Dispatcher | undefined;
   };
 
-  let { localPlayerId }: Props = $props();
+  let { localPlayerId, dispatcher }: Props = $props();
 
   const gameState = gameEngine.state;
   const flip = $derived(gameState.activeCoinFlip);
@@ -28,6 +30,10 @@
 
   function resolveYoink() {
     gameEngine.resolveItslamEffect(localPlayerId);
+    dispatcher?.publish({
+      type: "RESOLVE_ITSLAM",
+      payload: {},
+    });
   }
 
   // Shared selection state for Lure 2 Sheep / Remove 2 Sheep (just indices)
@@ -54,6 +60,10 @@
 
   function resolveSheepIndices() {
     gameEngine.resolveItslamEffect(localPlayerId, selectedSheepIndices);
+    dispatcher?.publish({
+      type: "RESOLVE_ITSLAM",
+      payload: { sheepIndices: selectedSheepIndices },
+    });
   }
 
   function togglePartSelection(sheepIndex: number, partIndex: 0 | 1) {
@@ -76,6 +86,13 @@
       selectedSheepIndices,
       partIndices,
     );
+    dispatcher?.publish({
+      type: "RESOLVE_ITSLAM",
+      payload: {
+        sheepIndices: selectedSheepIndices,
+        targetPartIndices: partIndices,
+      },
+    });
   }
 
   // Recover 1 Sheep: pick 2-3 cards from the discard pile (not the loser's
@@ -104,10 +121,18 @@
       undefined,
       selectedDiscardIndices,
     );
+    dispatcher?.publish({
+      type: "RESOLVE_ITSLAM",
+      payload: { discardIndices: selectedDiscardIndices },
+    });
   }
 
   function predict(prediction: "looking" | "not_looking") {
     gameEngine.submitPrediction(localPlayerId, prediction);
+    dispatcher?.publish({
+      type: "SUBMIT_PREDICTION",
+      payload: { prediction },
+    });
   }
 
   const isHost = $derived(localPlayerId === gameState.hostId);
@@ -123,6 +148,10 @@
     const timer = setTimeout(() => {
       const result = gameEngine.generateFlipResult();
       gameEngine.submitFlipResult(localPlayerId, result);
+      dispatcher?.publish({
+        type: "SUBMIT_FLIP_RESULT",
+        payload: { result },
+      });
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -148,6 +177,10 @@
       ? setTimeout(
           () => {
             gameEngine.finalizeCoinFlip(localPlayerId);
+            dispatcher?.publish({
+              type: "FINALIZE_COIN_FLIP",
+              payload: {},
+            });
           },
           Math.max(0, endsAt - Date.now()),
         )

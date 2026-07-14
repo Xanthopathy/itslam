@@ -2,37 +2,38 @@
   // src/lib/components/modals/LobbyModal.svelte
   import { gameEngine } from "../../gameStore";
   import { NetworkClient } from "../../network/client";
-  import { createBroadcastChannelAdapter } from "../../network/adapters/broadcastChannelAdapter";
   import {
     createRoomCode,
     parseRoomCodeFromUrl,
     sanitizeRoomCode,
   } from "../../network/topics";
   import type { RoomActionMessage } from "../../network/messages";
-  import { join } from "path";
 
   type Props = {
     // Persistent per-browser identity, generated/stored by the root page
     // (localStorage-backed UUID) - NOT generated here
     localPlayerId: string;
+    networkClient: NetworkClient;
+    roomCode: string;
   };
 
-  let { localPlayerId }: Props = $props();
+  let {
+    localPlayerId,
+    networkClient,
+    roomCode = $bindable(""),
+  }: Props = $props();
 
   const gameState = gameEngine.state;
 
   type Screen = "landing" | "enter-name" | "waiting-room";
   let screen = $state<Screen>("landing");
   let isHosting = $state(false);
-  let roomCode = $state("");
   let playerNameInput = $state("");
   let roomCodeInput = $state(""); // manual entry for joiners without a ?room= link
 
   // Joined players seen so far, keyed by id. Not part of GameState - this is
   // purely a pre-InitGame client-side list built from PLAYER_JOINED messages
   let joinedPlayers = $state<{ id: string; name: string }[]>([]);
-
-  const networkClient = new NetworkClient(createBroadcastChannelAdapter());
 
   // On mount: if the URL already has ?room=, skip the landing screen
   // entirely and go straight to name entry as a joiner
@@ -106,7 +107,8 @@
 
   $effect(() => {
     return () => {
-      networkClient.disconnect();
+      if (roomCode)
+        networkClient.unsubscribeFromRoom(roomCode, handleIncomingMessage);
     };
   });
 
@@ -134,7 +136,7 @@
   <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
     <div class="bg-white rounded-xl p-6 w-96 flex flex-col gap-4 items-center">
       {#if screen === "landing"}
-        <h2 class="text-2xl font-bold">Is That Sheep Looking At Me?</h2>
+        <h2 class="text-xl font-bold">Is That Sheep Looking At Me?</h2>
         <button
           type="button"
           class="w-full px-4 py-2 rounded-md bg-blue-700 text-white font-semibold hover:bg-blue-800"
@@ -154,9 +156,9 @@
           <p class="text-sm text-gray-600">
             Share this link so others can join:
           </p>
-          <code class="bg-gray-100 rounded px-2 py-1 text-sm break-all"
-            >{window.location.href}</code
-          >
+          <code class="bg-gray-100 rounded px-2 py-1 text-sm break-all">
+            {window.location.href}
+          </code>
         {:else if !roomCode}
           <label class="w-full flex flex-col gap-1 text-sm text-gray-600">
             Room code
@@ -168,9 +170,7 @@
             />
           </label>
         {:else}
-          <p class="text-sm text-gray-600">
-            Joining room <strong>{roomCode}</strong>
-          </p>
+          <p class="text-sm text-gray-600">Joining room {roomCode}</p>
         {/if}
 
         <label class="w-full flex flex-col gap-1 text-sm text-gray-600">
@@ -193,7 +193,7 @@
           Continue
         </button>
       {:else if screen === "waiting-room"}
-        <h2 class="text-xl font-bold">Room {roomCode}</h2>
+        <h2 class="text-lg font-bold">Room {roomCode}</h2>
         <p class="text-sm text-gray-600">Waiting for players...</p>
 
         <div class="w-full flex flex-col gap-1">

@@ -3,19 +3,16 @@
   import { gameEngine } from "$lib/gameStore";
   import LobbyModal from "$lib/components/modals/LobbyModal.svelte";
   import GameBoard from "$lib/components/game/GameBoard.svelte";
+  import { NetworkClient } from "$lib/network/client";
+  import { createBroadcastChannelAdapter } from "$lib/network/adapters/broadcastChannelAdapter";
+  import { createDispatcher } from "$lib/network/dispatcher";
 
   const gameState = gameEngine.state;
 
   const STORAGE_KEY = "itslam_local_player_id";
 
-  // Persistent per-browser identity, generated once and stored in
-  // localStorage - so a refresh doesn't lose who you are mid-game. This
-  // become the player's real id once InitGame runs, per the
-  // InitGame({ id, name }[]) signature.
   let localPlayerId = $state("");
 
-  // localStorage/crypto aren't available during SSR - this only runs client-side, which is fine since the whole app is client-driven anyway
-  // (no server backend per PLAN.MD).
   $effect(() => {
     let id = localStorage.getItem(STORAGE_KEY);
     if (!id) {
@@ -25,16 +22,36 @@
     localPlayerId = id;
   });
 
-  // The actual Lobby -> GameBoard transition. Once SYNC_STATE (or, for the
-  // host, InitGame directly) populates state.players with an entry matching
-  // our persistent id, `me` resolves and we're in the game.
   const me = $derived(gameState.players.find((p) => p.id === localPlayerId));
+
+  // Owned here, not in LobbyModal - GameBoard/ChaosModal need this same
+  // connected client and room code after the handoff, not a fresh one.
+  const networkClient = new NetworkClient(createBroadcastChannelAdapter());
+  let roomCode = $state("");
+
+  const isHost = $derived(gameState.hostId === localPlayerId);
+  const dispatcher = $derived(
+    roomCode
+      ? createDispatcher(networkClient, roomCode, localPlayerId, () => isHost)
+      : undefined,
+  );
+
+  // Subscribe once we have a room code and dispatcher - this is what makes
+  // OTHER clients' actions take effect here (LobbyModal's own subscription,
+  // set up during join, only lasts until it unmounts post-handoff).
+  $effect(() => {
+    if (!roomCode || !dispatcher) return;
+    networkClient.subscribeToRoom(roomCode, dispatcher.applyIncoming);
+    return () => {
+      networkClient.unsubscribeFromRoom(roomCode, dispatcher.applyIncoming);
+    };
+  });
 </script>
 
 {#if !localPlayerId}
-  <!-- brief flash while localStorage is read on Mount -->
+  <!-- brief flash while localStorage is read on mount -->
 {:else if !me}
-  <LobbyModal {localPlayerId} />
+  <LobbyModal {localPlayerId} {networkClient} bind:roomCode />
 {:else}
-  <GameBoard {localPlayerId} />
+  <GameBoard {localPlayerId} {dispatcher} />
 {/if}

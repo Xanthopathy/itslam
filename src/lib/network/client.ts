@@ -15,6 +15,11 @@ export type RealtimeAdapter = {
 
 export class NetworkClient {
   private readonly adapter: RealtimeAdapter;
+  private readonly handlers = new Map<
+    string,
+    Set<(message: RoomActionMessage) => void>
+  >();
+  private readonly subscribedTopics = new Set<string>();
 
   constructor(adapter: RealtimeAdapter) {
     this.adapter = adapter;
@@ -26,6 +31,8 @@ export class NetworkClient {
 
   public async disconnect(): Promise<void> {
     await this.adapter.disconnect();
+    this.handlers.clear();
+    this.subscribedTopics.clear();
   }
 
   public async subscribeToRoom(
@@ -34,17 +41,35 @@ export class NetworkClient {
   ): Promise<void> {
     const topic = buildRoomTopic(roomCode);
 
-    await this.adapter.subscribe(topic, (raw) => {
-      const parsed = decodeMessage(raw);
-      if (!parsed) return;
-      onMessage(parsed);
-    });
+    let topicHandlers = this.handlers.get(topic);
+    if (!topicHandlers) {
+      topicHandlers = new Set();
+      this.handlers.set(topic, topicHandlers);
+    }
+
+    if (!this.subscribedTopics.has(topic)) {
+      this.subscribedTopics.add(topic);
+      await this.adapter.subscribe(topic, (raw) => {
+        const parsed = decodeMessage(raw);
+        if (!parsed) return;
+        for (const handler of this.handlers.get(topic) ?? []) {
+          handler(parsed);
+        }
+      });
+    }
+  }
+
+  public unsubscribeFromRoom(
+    roomCode: string,
+    onMessage: (message: RoomActionMessage) => void,
+  ): void {
+    const topic = buildRoomTopic(roomCode);
+    this.handlers.get(topic)?.delete(onMessage);
   }
 
   public async publishToRoom(message: RoomActionMessage): Promise<void> {
     const topic = buildRoomTopic(message.roomCode);
     const payload = encodeMessage(message);
-
     await this.adapter.publish(topic, payload);
   }
 }

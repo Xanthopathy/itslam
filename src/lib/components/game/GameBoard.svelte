@@ -4,13 +4,18 @@
   import PlayerHand from "./PlayerHand.svelte";
   import PlayerField from "./PlayerField.svelte";
   import ChaosModal from "../modals/ChaosModal.svelte";
+  import GameOverModal from "../modals/GameOverModal.svelte";
   import GameLog from "./GameLog.svelte";
+  import type { Dispatcher } from "../../network/dispatcher";
 
   type Props = {
     localPlayerId: string;
+    // Undefined only very briefly - root page only mounts GameBoard once
+    // roomCode is known, so this should always be set in practice.
+    dispatcher: Dispatcher | undefined;
   };
 
-  let { localPlayerId }: Props = $props();
+  let { localPlayerId, dispatcher }: Props = $props();
 
   const gameState = gameEngine.state;
   let localPlayer = $derived(
@@ -37,10 +42,18 @@
       return;
     }
     gameEngine.endTurn(localPlayerId, []);
+    dispatcher?.publish({
+      type: "END_TURN",
+      payload: { cardIdsToDiscard: [] },
+    });
   }
 
   function handleDiscard(cardIds: string[]) {
     gameEngine.endTurn(localPlayerId, cardIds);
+    dispatcher?.publish({
+      type: "END_TURN",
+      payload: { cardIdsToDiscard: cardIds },
+    });
     awaitingDiscard = false;
   }
 
@@ -50,6 +63,10 @@
     // 2-3 cards: always forming a sheep on your own field, never needs a target.
     if (cardIds.length >= 2) {
       gameEngine.playCards(localPlayerId, cardIds);
+      dispatcher?.publish({
+        type: "PLAY_CARDS",
+        payload: { cardIds },
+      });
       return;
     }
 
@@ -60,6 +77,10 @@
     // it never needs a target, and can be played off-turn during grace period.
     if (card.name === "ReFlip") {
       gameEngine.playCards(localPlayerId, cardIds);
+      dispatcher?.publish({
+        type: "PLAY_CARDS",
+        payload: { cardIds },
+      });
       return;
     }
 
@@ -76,6 +97,10 @@
       // without a targetPlayer - so only Recover skips the target step.
       if (card.name === "Recover 1 Sheep") {
         gameEngine.playCards(localPlayerId, cardIds);
+        dispatcher?.publish({
+          type: "PLAY_CARDS",
+          payload: { cardIds },
+        });
       } else {
         pendingPlay = { cardIds, mode: "player-target" };
       }
@@ -90,6 +115,10 @@
   function handlePlayerTarget(targetPlayerId: string) {
     if (!pendingPlay) return;
     gameEngine.playCards(localPlayerId, pendingPlay.cardIds, targetPlayerId);
+    dispatcher?.publish({
+      type: "PLAY_CARDS",
+      payload: { cardIds: pendingPlay.cardIds, targetPlayerId },
+    });
     pendingPlay = null;
   }
 
@@ -102,6 +131,14 @@
       targetPlayerId,
       sheepIndex,
     );
+    dispatcher?.publish({
+      type: "PLAY_CARDS",
+      payload: {
+        cardIds: pendingPlay.cardIds,
+        targetPlayerId,
+        targetSheepIndex: sheepIndex,
+      },
+    });
     pendingPlay = null;
   }
 
@@ -119,12 +156,21 @@
       sheepIndex,
       partIndex,
     );
+    dispatcher?.publish({
+      type: "PLAY_CARDS",
+      payload: {
+        cardIds: pendingPlay.cardIds,
+        targetPlayerId,
+        targetSheepIndex: sheepIndex,
+        targetPartIndex: partIndex,
+      },
+    });
     pendingPlay = null;
   }
 </script>
 
 {#if gameState.status === "playing" && localPlayer}
-  <ChaosModal {localPlayerId} />
+  <ChaosModal {localPlayerId} {dispatcher} />
 
   <div class="flex flex-col gap-4 p-4">
     <!-- turn indicator + piles -->
@@ -224,7 +270,5 @@
 {:else if gameState.status === "lobby"}
   <p class="text-center text-gray-500 p-8">Waiting for the game to start...</p>
 {:else if gameState.status === "finished"}
-  <p class="text-center text-gray-500 p-8">
-    Game over! (GameOverModal goes here)
-  </p>
+  <GameOverModal {localPlayerId} />
 {/if}
