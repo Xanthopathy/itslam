@@ -22,5 +22,5 @@ export function createRoomCode(seed = Math.random()): string {
   const suffix = Math.floor(seed * 10000)
     .toString()
     .padStart(4, "0");
-  return `SHEEP-${suffix}`;
+  return `${suffix}`;
 }

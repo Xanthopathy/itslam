@@ -8,7 +8,7 @@
 // actions never take effect locally. Once the real MQTT adapter is wired in
 // (which likely DOES echo), the echo-guard step (next up) is what prevents
 // a double-apply of these same local actions.
-import { gameEngine } from "../gameStore.svelte";
+import { gameEngine, getGameStateSnapshot } from "../gameStore.svelte";
 import { NetworkClient } from "./client";
 import { canPublishAction } from "./host";
 import type { RoomAction, RoomActionMessage } from "./messages";
@@ -38,7 +38,7 @@ export function createDispatcher(
   async function awaitSyncState(): Promise<void> {
     await networkClient.publishToRoom({
       type: "SYNC_STATE",
-      payload: { state: $state.snapshot(gameEngine.state) },
+      payload: { state: getGameStateSnapshot() },
       roomCode,
       playerId: localPlayerId,
       sentAt: Date.now(),
@@ -88,7 +88,10 @@ export function createDispatcher(
           message.payload.discardIndices,
         );
         break;
-      // INIT_GAME / SYNC_STATE / PLAYER_JOINED already handled in LobbyModal already - not duplicated here.
+      case "SYNC_STATE":
+        gameEngine.loadState(message.payload.state);
+        break;
+      // INIT_GAME / PLAYER_JOINED are handled by the lobby or host flow.
       default:
         break;
     }

@@ -3,9 +3,47 @@
   import { gameEngine } from "$lib/gameStore.svelte";
   import LobbyModal from "$lib/components/modals/LobbyModal.svelte";
   import GameBoard from "$lib/components/game/GameBoard.svelte";
-  import { NetworkClient } from "$lib/network/client";
+  import { NetworkClient, type RealtimeAdapter } from "$lib/network/client";
+  import { createBroadcastChannelAdapter } from "$lib/network/adapters/broadcastChannelAdapter";
   import { createMqttAdapter } from "$lib/network/adapters/mqttAdapter";
   import { createDispatcher } from "$lib/network/dispatcher";
+
+  function createResilientAdapter(): RealtimeAdapter {
+    const mqttAdapter = createMqttAdapter();
+    const fallbackAdapter = createBroadcastChannelAdapter();
+    let activeAdapter: RealtimeAdapter = mqttAdapter;
+    let usingFallback = false;
+
+    return {
+      async connect() {
+        if (usingFallback) {
+          await activeAdapter.connect();
+          return;
+        }
+
+        try {
+          await activeAdapter.connect();
+        } catch (error) {
+          console.warn(
+            "MQTT connection failed, switching to BroadcastChannel fallback.",
+            error,
+          );
+          usingFallback = true;
+          activeAdapter = fallbackAdapter;
+          await activeAdapter.connect();
+        }
+      },
+      async disconnect() {
+        await activeAdapter.disconnect();
+      },
+      async subscribe(topic, onMessage) {
+        await activeAdapter.subscribe(topic, onMessage);
+      },
+      async publish(topic, payload) {
+        await activeAdapter.publish(topic, payload);
+      },
+    };
+  }
 
   const gameState = gameEngine.state;
 
@@ -26,7 +64,7 @@
 
   // Owned here, not in LobbyModal - GameBoard/ChaosModal need this same
   // connected client and room code after the handoff, not a fresh one.
-  const networkClient = new NetworkClient(createMqttAdapter());
+  const networkClient = new NetworkClient(createResilientAdapter());
   let roomCode = $state("");
 
   const isHost = $derived(gameState.hostId === localPlayerId);

@@ -444,4 +444,8 @@ class GameEngine {
   }
 }
 
+export function getGameStateSnapshot(): GameState {
+  return $state.snapshot(gameEngine.state);
+}
+
 export const gameEngine = new GameEngine();

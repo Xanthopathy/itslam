@@ -30,6 +30,9 @@
   type Screen = "landing" | "enter-name" | "waiting-room";
   let screen = $state<Screen>("landing");
   let isHosting = $state(false);
+  let isSubmitting = $state(false);
+  let isReconnecting = $state(false);
+  let submitError = $state("");
   let playerNameInput = $state("");
   let roomCodeInput = $state(""); // manual entry for joiners without a ?room= link
 
@@ -59,8 +62,11 @@
             session.isHosting === true;
           if (isReturningHost && session.playerName) {
             playerNameInput = session.playerName;
+            isReconnecting = true;
             setTimeout(() => {
-              if (isHosting && screen === "enter-name") void submitName();
+              if (isHosting && screen === "enter-name") {
+                void submitName({ isReconnect: true });
+              }
             }, 0);
           }
         } catch {
@@ -100,11 +106,7 @@
 
   function handleIncomingMessage(message: RoomActionMessage) {
     if (message.type === "PLAYER_JOINED") {
-      if (joinedPlayers.some((p) => p.id === message.playerId)) return; // already known
-      joinedPlayers = [
-        ...joinedPlayers,
-        { id: message.playerId, name: message.payload.playerName },
-      ];
+      upsertJoinedPlayer(message.playerId, message.payload.playerName);
     } else if (message.type === "PLAYER_LIST_REQUEST") {
       const name = playerNameInput.trim();
       if (name) void publishPlayerJoined(name);
@@ -126,44 +128,78 @@
     });
   }
 
-  async function submitName() {
+  function upsertJoinedPlayer(id: string, name: string): void {
+    const existing = joinedPlayers.findIndex((player) => player.id === id);
+    if (existing === -1) {
+      joinedPlayers = [...joinedPlayers, { id, name }];
+      return;
+    }
+    if (joinedPlayers[existing]?.name === name) return;
+    joinedPlayers = joinedPlayers.map((player) =>
+      player.id === id ? { id, name } : player,
+    );
+  }
+
+  async function submitName(options?: { isReconnect?: boolean }) {
+    if (isSubmitting) return;
+
     const name = playerNameInput.trim();
     if (!name) return;
 
-    if (!isHosting) {
-      // Joining without a ?room= link (typed manually)
-      if (!roomCode) roomCode = sanitizeRoomCode(roomCodeInput);
-      if (!roomCode) return;
-    }
+    submitError = "";
+    isSubmitting = true;
 
-    await networkClient.connect();
-    await networkClient.subscribeToRoom(roomCode, handleIncomingMessage);
+    try {
+      if (!isHosting) {
+        // Joining without a ?room= link (typed manually)
+        if (!roomCode) roomCode = sanitizeRoomCode(roomCodeInput);
+        if (!roomCode) return;
 
-    await publishPlayerJoined(name);
+        // Keep the URL shareable and stable after manual room-code join.
+        const url = new URL(window.location.href);
+        if (url.searchParams.get("room") !== roomCode) {
+          url.searchParams.set("room", roomCode);
+          pushState(`${url.pathname}${url.search}${url.hash}`, {});
+        }
+      }
 
-    localStorage.setItem(
-      LOBBY_SESSION_KEY,
-      JSON.stringify({
-        playerId: localPlayerId,
+      await networkClient.connect();
+      await networkClient.subscribeToRoom(roomCode, handleIncomingMessage);
+
+      await publishPlayerJoined(name);
+
+      localStorage.setItem(
+        LOBBY_SESSION_KEY,
+        JSON.stringify({
+          playerId: localPlayerId,
+          roomCode,
+          isHosting,
+          playerName: name,
+        }),
+      );
+
+      // BroadcastChannel doesn't echo our own publish back to us - add
+      // ourselves locally rather than waiting for a message that won't arrive
+      upsertJoinedPlayer(localPlayerId, name);
+
+      await networkClient.publishToRoom({
+        type: "PLAYER_LIST_REQUEST",
+        payload: {},
         roomCode,
-        isHosting,
-        playerName: name,
-      }),
-    );
+        playerId: localPlayerId,
+        sentAt: Date.now(),
+      });
 
-    // BroadcastChannel doesn't echo our own publish back to us - add
-    // ourselves locally rather than waiting for a message that won't arrive
-    joinedPlayers = [...joinedPlayers, { id: localPlayerId, name }];
-
-    await networkClient.publishToRoom({
-      type: "PLAYER_LIST_REQUEST",
-      payload: {},
-      roomCode,
-      playerId: localPlayerId,
-      sentAt: Date.now(),
-    });
-
-    screen = "waiting-room";
+      screen = "waiting-room";
+    } catch (error) {
+      console.error("Unable to connect to room", error);
+      submitError = options?.isReconnect
+        ? "Reconnection failed. Please try Continue again."
+        : "Unable to join room right now. Please try again.";
+    } finally {
+      isSubmitting = false;
+      isReconnecting = false;
+    }
   }
 
   $effect(() => {
@@ -226,7 +262,7 @@
             <input
               type="text"
               class="border rounded-md px-3 py-2"
-              placeholder="SHEEP-1234"
+              placeholder="1234"
               bind:value={roomCodeInput}
             />
           </label>
@@ -248,11 +284,24 @@
         <button
           type="button"
           class="w-full px-4 py-2 rounded-md bg-blue-700 text-white font-semibold hover:bg-blue-800 disabled:opacity-40"
-          disabled={!playerNameInput.trim()}
-          onclick={submitName}
+          disabled={!playerNameInput.trim() || isSubmitting}
+          onclick={() => void submitName()}
         >
-          Continue
+          {#if isReconnecting || isSubmitting}
+            <span class="inline-flex items-center gap-2">
+              <span
+                class="h-4 w-4 rounded-full border-2 border-white/60 border-t-white animate-spin"
+              ></span>
+              {isReconnecting ? "Reconnecting..." : "Connecting..."}
+            </span>
+          {:else}
+            Continue
+          {/if}
         </button>
+
+        {#if submitError}
+          <p class="w-full text-xs text-red-600">{submitError}</p>
+        {/if}
       {:else if screen === "waiting-room"}
         <h2 class="text-lg font-bold">Room {roomCode}</h2>
         <p class="text-sm text-gray-600">Waiting for players...</p>
