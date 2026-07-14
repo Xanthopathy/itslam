@@ -43,7 +43,19 @@ class GameEngine {
   // ========== GAME LIFECYCLE ==========
 
   public loadState(newState: GameState): void {
-    this.state = newState;
+    // Preserve the existing reactive proxy reference and update fields in-place
+    // so all derived consumers (that captured `gameEngine.state`) stay in sync.
+    this.state.players = newState.players;
+    this.state.drawPile = newState.drawPile;
+    this.state.discardPile = newState.discardPile;
+    this.state.currentTurnPlayerId = newState.currentTurnPlayerId;
+    this.state.status = newState.status;
+    this.state.roomCode = newState.roomCode;
+    this.state.gameLog = newState.gameLog;
+    this.state.activeCoinFlip = newState.activeCoinFlip;
+    this.state.isFinalRound = newState.isFinalRound;
+    this.state.finalRoundTriggeredBy = newState.finalRoundTriggeredBy;
+    this.state.hostId = newState.hostId;
   }
 
   // IMPORTANT: Because we're using MQTT, the host will be the one to run InitGame() and then send the full deck to all clients. This ensures that all clients have the same deck order and can validate game state independently.
