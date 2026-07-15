@@ -140,7 +140,7 @@ class GameEngine {
     if (!player) return;
 
     if (player.hand.length > 7) {
-      if (player.hand.length - cardIdsToDiscard.length < 7) {
+      if (player.hand.length - cardIdsToDiscard.length <= 7) {
         let discardedCount = 0;
         for (const cardId of cardIdsToDiscard) {
           const cardIndex = findCardIndexById(player, cardId);

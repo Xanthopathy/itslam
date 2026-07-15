@@ -28,10 +28,10 @@
   // refer to playCards, there are no valid 4+ plays
   const MAX_SELECTABLE = 3;
 
-  // "Discard down to 7" means: hand.length - discarded < 7, i.e. discard at
-  // least (hand.length - 6). Computed here since it only depends on `cards`,
-  // which this component already has - no need for GameBoard to pass it in.
-  const minDiscardRequired = $derived(Math.max(0, cards.length - 6));
+  // "Discard down to 7" means discarding enough cards to leave at most 7
+  // cards in hand. Computed here since it only depends on `cards`, which this
+  // component already has - no need for GameBoard to pass it in.
+  const minDiscardRequired = $derived(Math.max(0, cards.length - 7));
 
   function toggleCard(card: Card) {
     if (disabled) return;

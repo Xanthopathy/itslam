@@ -94,8 +94,8 @@ This section tracks execution issues without changing the main phase roadmap abo
 
 1. NET-001
 2. NET-002
-3. LOGIC-001
-4. LOGIC-002
+3. LOGIC-001 [x]
+4. LOGIC-002 [x]
 5. UX-001
 6. UX-002
 7. UX-003
@@ -135,20 +135,6 @@ This section tracks execution issues without changing the main phase roadmap abo
   \_reconnect @ mqtt.esm.js:3
   (anonymous) @ mqtt.esm.js:3
 ```
-
-#### LOGIC-001 - Discard limit off by one
-
-- **Area**: game-logic
-- **Severity**: high
-- **Status**: todo
-- **Problem**: discard logic off by one, player discards 1 too many and can stay at 7 max instead of 6
-
-#### LOGIC-002 - Card not found after play
-
-- **Area**: game-logic
-- **Severity**: high
-- **Status**: todo
-- **Problem**: playing cards successfully gives this error: `utils.ts:54 Card butt-41c98a85-5df2-45d1-8338-a182c3f647d6 not found in player ec9ac264-342d-40f7-88e7-ca4f4a84cc2a's hand.` (happens to action/modifier/part/itslam/etc cards, whether the player played 1 or multiple cards at once)
 
 #### UX-001 - Turn loop clarity in logs
 
@@ -243,4 +229,16 @@ This section tracks execution issues without changing the main phase roadmap abo
 
 ### Completed Log
 
-- _Empty for now; move finished issue cards here with date and commit reference._
+#### LOGIC-002 - Card not found after play
+
+- **Area**: game-logic
+- **Severity**: high
+- **Status**: todo
+- **Problem**: playing cards successfully gives this error: `utils.ts:54 Card butt-41c98a85-5df2-45d1-8338-a182c3f647d6 not found in player ec9ac264-342d-40f7-88e7-ca4f4a84cc2a's hand.` (happens to action/modifier/part/itslam/etc cards, whether the player played 1 or multiple cards at once)
+
+#### LOGIC-001 - Discard limit off by one
+
+- **Area**: game-logic
+- **Severity**: high
+- **Status**: todo
+- **Problem**: discard logic off by one, player discards 1 too many and can stay at 7 max instead of 6
