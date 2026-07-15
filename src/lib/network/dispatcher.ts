@@ -9,6 +9,15 @@ import { NetworkClient } from "./client";
 import { canPublishAction } from "./host";
 import type { RoomAction, RoomActionMessage } from "./messages";
 
+const LOCALLY_APPLIED_ACTIONS = new Set<RoomAction["type"]>([
+  "PLAY_CARDS",
+  "END_TURN",
+  "SUBMIT_PREDICTION",
+  "SUBMIT_FLIP_RESULT",
+  "FINALIZE_COIN_FLIP",
+  "RESOLVE_ITSLAM",
+]);
+
 export type Dispatcher = {
   publish: (action: RoomAction) => Promise<void>;
   applyIncoming: (message: RoomActionMessage) => void;
@@ -45,6 +54,12 @@ export function createDispatcher(
    * Applies an action received FROM ANOTHER CLIENT to local gameEngine state. This is the other half of "apply locally + publish" - each client's local action is applied via the direct gameEngine call at the call site (see GameBoard/ChaosModal), while this function is what makes everyone ELSE'S actions take effect on your client.
    */
   async function applyIncoming(message: RoomActionMessage): Promise<void> {
+    if (
+      message.playerId === localPlayerId &&
+      LOCALLY_APPLIED_ACTIONS.has(message.type)
+    )
+      return;
+
     switch (message.type) {
       case "PLAYER_JOINED":
         if (isHost() && gameEngine.state.status === "playing") {

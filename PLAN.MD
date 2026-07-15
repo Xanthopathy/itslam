@@ -53,7 +53,7 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - [x] **Security/Roles** ([src/lib/network/host.ts](src/lib/network/host.ts)): Gating sensitive actions (INIT, FLIP_RESULT) to host-only.
 - [ ] **MQTT Adapter**: Real implementation using HiveMQ/EMQX over WSS. (Temporarily using a stand-in for testing)
 - [x] **Action Dispatcher**: Wiring incoming MQTT messages to trigger `gameStore` methods.
-- [ ] **Echo Guard** ([src/lib/network/sync.ts](src/lib/network/sync.ts)): Prevent clients from double-applying their own sent actions.
+- [x] **Echo Guard** ([src/lib/network/sync.ts](src/lib/network/sync.ts)): Prevent clients from double-applying their own sent actions.
 - [ ] **State Recovery**: Implementation of `SYNC_STATE` for late-joiners/refreshers.
 
 ### Phase 3: Frontend & Components [DONE]
@@ -219,6 +219,13 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Severity**: medium
 - **Status**: todo
 - **Problem**: better player representation (icon, 4-quadrant splitting with each player having their hand size shown)
+
+#### UI-007 - ITSLAM resolution
+
+- **Area**: visuals
+- **Severity**: high
+- **Status**: todo
+- **Problem**: grace period card currently doesn't resolve properly if the initial player fails, can result in a softlock where the "Anyone can play ReFlip in the next 0s..." card stays indefinitely and the player can't end their turn (possibly add an X button to close/minimize)
 
 #### VIS-001 - Card movement animations
 
