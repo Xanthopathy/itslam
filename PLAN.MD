@@ -46,15 +46,15 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - [x] **Scoring & Lifecycle** ([src/lib/game/scoring.ts](src/lib/game/scoring.ts)): Game over checks, winner calculation, and final-round handoff timing.
 - [x] **Orchestrator** ([src/lib/gameStore.svelte.ts](src/lib/gameStore.svelte.ts)): Svelte `$state` management and public API surface.
 
-### Phase 2: Networking & Multiplayer [IN_PROGRESS]
+### Phase 2: Networking & Multiplayer [DONE]
 
 - [x] **Message Schema** ([src/lib/network/messages.ts](src/lib/network/messages.ts)): JSON action types and encoding/decoding.
 - [x] **Topic & URL Logic** ([src/lib/network/topics.ts](src/lib/network/topics.ts)): Room code generation and `?room=` URL parsing.
 - [x] **Security/Roles** ([src/lib/network/host.ts](src/lib/network/host.ts)): Gating sensitive actions (INIT, FLIP_RESULT) to host-only.
-- [ ] **MQTT Adapter**: Real implementation using HiveMQ/EMQX over WSS. (Temporarily using a stand-in for testing)
+- [x] **MQTT Adapter** ([src/lib/network/adapters/mqttAdapter.ts](src/lib/network/adapters/mqttAdapter.ts)): Real HiveMQ MQTT implementation over secure WebSockets.
 - [x] **Action Dispatcher**: Wiring incoming MQTT messages to trigger `gameStore` methods.
-- [x] **Echo Guard** ([src/lib/network/sync.ts](src/lib/network/sync.ts)): Prevent clients from double-applying their own sent actions.
-- [ ] **State Recovery**: Implementation of `SYNC_STATE` for late-joiners/refreshers.
+- [x] **Echo Guard** ([src/lib/network/dispatcher.ts](src/lib/network/dispatcher.ts)): Prevent clients from double-applying their own sent actions.
+- [x] **State Recovery** ([src/lib/network/persistence.ts](src/lib/network/persistence.ts)): Versioned local snapshots, explicit sync requests, and retained MQTT snapshots for late-joiners/refreshers.
 
 ### Phase 3: Frontend & Components [DONE]
 
