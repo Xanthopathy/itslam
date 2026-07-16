@@ -90,33 +90,7 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Area**: networking, game-logic, ux, visuals, polish
 - **Status**: todo, in-progress, blocked, done
 
-### Prioritized Queue
-
-1. NET-001
-2. NET-002 [x]
-3. LOGIC-001 [x]
-4. LOGIC-002 [x]
-5. UX-001
-6. UX-002
-7. UX-003
-8. UX-004
-9. UI-001
-10. UI-002
-11. UI-003
-12. UI-004
-13. UI-005
-14. UI-006
-15. VIS-001
-16. POLISH-001
-
 ### Issue Cards
-
-#### UX-001 - Turn loop clarity in logs
-
-- **Area**: ux
-- **Severity**: medium
-- **Status**: todo
-- **Problem**: Logs should clarify rounds whenever all players finish their turn for one loop
 
 #### UX-002 - Non-active hand should be dim/disabled
 
@@ -242,3 +216,10 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Severity**: high
 - **Status**: todo
 - **Problem**: host and non-host refresh should attempt to rejoin the ongoing game (non-host retain their last entered game in enter name field if not currently in a game, and rejoins the game with their existing game name if currently in a game)
+
+#### UX-001 - Turn loop clarity in logs
+
+- **Area**: ux
+- **Severity**: medium
+- **Status**: todo
+- **Problem**: Logs should clarify rounds whenever all players finish their turn for one loop

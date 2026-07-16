@@ -35,6 +35,8 @@ class GameEngine {
     drawPile: [],
     discardPile: [],
     currentTurnPlayerId: "",
+    roundStartPlayerId: undefined,
+    roundNumber: 0,
     status: "lobby",
     gameLog: [],
     isFinalRound: false,
@@ -54,6 +56,8 @@ class GameEngine {
     this.state.drawPile = newState.drawPile;
     this.state.discardPile = newState.discardPile;
     this.state.currentTurnPlayerId = newState.currentTurnPlayerId;
+    this.state.roundStartPlayerId = newState.roundStartPlayerId;
+    this.state.roundNumber = newState.roundNumber ?? 0;
     this.state.status = newState.status;
     this.state.roomCode = newState.roomCode;
     this.state.gameLog = newState.gameLog;
@@ -107,6 +111,15 @@ class GameEngine {
     this.state.players = shuffle(this.state.players);
     const randomIndex = Math.floor(Math.random() * this.state.players.length);
     this.state.currentTurnPlayerId = this.state.players[randomIndex].id;
+    this.state.roundStartPlayerId = this.state.currentTurnPlayerId;
+    this.state.roundNumber = 1;
+
+    const turnOrder = this.state.players
+      .slice(randomIndex)
+      .concat(this.state.players.slice(0, randomIndex))
+      .map((p) => p.name)
+      .join(" -> ");
+    log(this.state, `Turn order: ${turnOrder}`);
 
     const firstPlayer = findPlayerById(
       this.state,
@@ -115,7 +128,7 @@ class GameEngine {
     if (!firstPlayer) return;
 
     this.state.status = "playing";
-    log(this.state, `Game started! ${firstPlayer.name} goes first`);
+    log(this.state, `Round 1 starts! ${firstPlayer.name} goes first`);
     this.startTurn(firstPlayer);
     this.commitStateChange();
   }
@@ -203,6 +216,11 @@ class GameEngine {
       );
       this.commitStateChange();
       return;
+    }
+
+    if (nextPlayer.id === this.state.roundStartPlayerId) {
+      this.state.roundNumber += 1;
+      log(this.state, `Round ${this.state.roundNumber} begins!`);
     }
 
     this.startTurn(nextPlayer);

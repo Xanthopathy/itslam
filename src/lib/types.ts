@@ -79,6 +79,8 @@ export type GameState = {
   drawPile: Card[];
   discardPile: Card[];
   currentTurnPlayerId: string;
+  roundStartPlayerId?: string;
+  roundNumber: number;
   status: GameStatus;
   roomCode?: string;
   gameLog: GameLogEntry[];
