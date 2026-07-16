@@ -93,7 +93,7 @@ This section tracks execution issues without changing the main phase roadmap abo
 ### Prioritized Queue
 
 1. NET-001
-2. NET-002
+2. NET-002 [x]
 3. LOGIC-001 [x]
 4. LOGIC-002 [x]
 5. UX-001
@@ -117,24 +117,6 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Severity**: high
 - **Status**: todo
 - **Problem**: host and non-host refresh should attempt to rejoin the ongoing game (non-host retain their last entered game in enter name field if not currently in a game, and rejoins the game with their existing game name if currently in a game)
-
-#### NET-002 - Recurring MQTT reconnect error
-
-- **Area**: networking
-- **Severity**: high
-- **Status**: todo
-- **Problem**: this error randomly started popping up every second in console without touching anything for both players after playing a couple turns (npm run dev doesn't report anything):
-
-```
-  mqtt.esm.js:8
-  WebSocket connection to 'wss://broker.hivemq.com:8884/mqtt' failed:
-  sT @ mqtt.esm.js:8
-  (anonymous) @ mqtt.esm.js:8
-  r @ mqtt.esm.js:8
-  connect @ mqtt.esm.js:3
-  \_reconnect @ mqtt.esm.js:3
-  (anonymous) @ mqtt.esm.js:3
-```
 
 #### UX-001 - Turn loop clarity in logs
 
@@ -242,3 +224,21 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Severity**: high
 - **Status**: todo
 - **Problem**: discard logic off by one, player discards 1 too many and can stay at 7 max instead of 6
+
+#### NET-002 - Recurring MQTT reconnect error
+
+- **Area**: networking
+- **Severity**: high
+- **Status**: todo
+- **Problem**: this error randomly started popping up every second in console without touching anything for both players after playing a couple turns (npm run dev doesn't report anything):
+
+```
+  mqtt.esm.js:8
+  WebSocket connection to 'wss://broker.hivemq.com:8884/mqtt' failed:
+  sT @ mqtt.esm.js:8
+  (anonymous) @ mqtt.esm.js:8
+  r @ mqtt.esm.js:8
+  connect @ mqtt.esm.js:3
+  \_reconnect @ mqtt.esm.js:3
+  (anonymous) @ mqtt.esm.js:3
+```
