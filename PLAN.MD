@@ -97,7 +97,7 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Area**: ux
 - **Severity**: medium
 - **Status**: todo
-- **Problem**: prevent multiple non-compatible selection: If you first select an action card, selecting any other card will deselect the first action card, same rule applies if any newly selected card has no situation where they can be played together. More lax on head/butt/modifier cards though as the player can select the 2-3 cards to form a sheep at any point in the sequence.
+- **Problem**: prevent multiple non-compatible selection: If you first select an action card, selecting any other card should deselect the first action card, same rule applies if any newly selected card has no situation where they can be played together. More lax on head/butt/modifier cards though as the player can select the 2-3 cards to form a sheep at any point in the sequence.
 
 #### UI-001 - Temporary card icons
 
@@ -146,7 +146,7 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Area**: visuals
 - **Severity**: high
 - **Status**: todo
-- **Problem**: grace period card currently doesn't resolve properly if the initial player fails, can result in a softlock where the "Anyone can play ReFlip in the next 0s..." card stays indefinitely and the player can't end their turn (possibly add an X button to close/minimize)
+- **Problem**: grace period card currently doesn't resolve properly if the initial player fails (losing recover 1 sheep guess or having to take things [so the confirm button should work regardless of how many things the player picked from 0 to 2]), can result in a softlock where the "Anyone can play ReFlip in the next 0s..." card stays indefinitely and the player can't end their turn (possibly add an X button to close/minimize)
 
 #### VIS-001 - Card movement animations
 

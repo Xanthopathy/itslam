@@ -12,6 +12,7 @@
     onDiscard?: (cardIds: string[]) => void;
     disabled?: boolean;
     mode?: "play" | "discard";
+    resetSelectionVersion?: number;
   };
 
   let {
@@ -20,10 +21,19 @@
     onDiscard,
     disabled = false,
     mode = "play",
+    resetSelectionVersion = 0,
   }: Props = $props();
 
   // Local, transient selection - cleared after a successful play or manually.
   let selectedIds = $state<string[]>([]);
+  let lastResetSelectionVersion = 0;
+
+  $effect(() => {
+    if (resetSelectionVersion !== lastResetSelectionVersion) {
+      selectedIds = [];
+      lastResetSelectionVersion = resetSelectionVersion;
+    }
+  });
 
   // refer to playCards, there are no valid 4+ plays
   const MAX_SELECTABLE = 3;
@@ -33,15 +43,69 @@
   // component already has - no need for GameBoard to pass it in.
   const minDiscardRequired = $derived(Math.max(0, cards.length - 7));
 
+  function getSelectedCards(): Card[] {
+    return cards.filter((c) => selectedIds.includes(c.id));
+  }
+
+  function countParts(cardsToCheck: Card[]): number {
+    return cardsToCheck.filter(
+      (card) => card.type === "head" || card.type === "butt",
+    ).length;
+  }
+
+  function countModifiers(cardsToCheck: Card[]): number {
+    return cardsToCheck.filter((card) => card.type === "modifier").length;
+  }
+
+  function isSelectionCompatible(card: Card, selectedCards: Card[]): boolean {
+    const nextSelection = [...selectedCards, card];
+
+    if (nextSelection.length > MAX_SELECTABLE) {
+      return false;
+    }
+
+    const isActionLike = (candidate: Card) =>
+      candidate.type === "action" || candidate.type === "itslam";
+    const isPartOrModifier = (candidate: Card) =>
+      candidate.type === "head" ||
+      candidate.type === "butt" ||
+      candidate.type === "modifier";
+
+    if (isActionLike(card)) {
+      return selectedCards.length === 0;
+    }
+
+    if (selectedCards.some(isActionLike)) {
+      return false;
+    }
+
+    if (countModifiers(nextSelection) > 1) {
+      return false;
+    }
+
+    if (countParts(nextSelection) > 2) {
+      return false;
+    }
+
+    return selectedCards.every(isPartOrModifier) || isPartOrModifier(card);
+  }
+
   function toggleCard(card: Card) {
     if (disabled) return;
     if (mode === "discard" && card.type === "itslam") return; // never discardable
+
+    const selectedCards = getSelectedCards();
 
     if (selectedIds.includes(card.id)) {
       selectedIds = selectedIds.filter((id) => id !== card.id);
       return;
     }
-    if (mode === "play" && selectedIds.length >= MAX_SELECTABLE) return; // silently ignore, button below stays disabled too
+
+    if (!isSelectionCompatible(card, selectedCards)) {
+      selectedIds = [card.id];
+      return;
+    }
+
     selectedIds = [...selectedIds, card.id];
   }
 

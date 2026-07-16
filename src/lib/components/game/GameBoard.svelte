@@ -16,6 +16,7 @@
   };
 
   let { localPlayerId, dispatcher }: Props = $props();
+  let selectionResetVersion = $state(0);
 
   const gameState = gameEngine.state;
   let localPlayer = $derived(
@@ -39,6 +40,7 @@
     if (!localPlayer) return;
     if (localPlayer.hand.length > 7) {
       awaitingDiscard = true;
+      selectionResetVersion += 1;
       return;
     }
     gameEngine.endTurn(localPlayerId, []);
@@ -46,6 +48,8 @@
       type: "END_TURN",
       payload: { cardIdsToDiscard: [] },
     });
+
+    selectionResetVersion += 1;
   }
 
   function handleDiscard(cardIds: string[]) {
@@ -54,7 +58,9 @@
       type: "END_TURN",
       payload: { cardIdsToDiscard: cardIds },
     });
+
     awaitingDiscard = false;
+    selectionResetVersion += 1;
   }
 
   function handleHandPlay(cardIds: string[]) {
@@ -253,6 +259,7 @@
       mode={awaitingDiscard ? "discard" : "play"}
       disabled={pendingPlay !== null ||
         gameState.currentTurnPlayerId !== localPlayerId}
+      resetSelectionVersion={selectionResetVersion}
     />
 
     <!-- end turn, only on your turn and not mid-target-selection -->
