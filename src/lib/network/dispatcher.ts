@@ -62,9 +62,19 @@ export function createDispatcher(
 
     switch (message.type) {
       case "PLAYER_JOINED":
-        if (isHost() && gameEngine.state.status === "playing") {
-          void awaitSyncState(); // void to avoid unhandled promise warning
+        const isAnotherPlayer = message.playerId !== localPlayerId;
+        const localClientHasGameState = gameEngine.state.status === "playing";
+        const localClientCanProvideState =
+          isHost() || gameEngine.state.hostId === message.playerId;
+
+        if (
+          isAnotherPlayer &&
+          localClientHasGameState &&
+          localClientCanProvideState
+        ) {
+          void awaitSyncState();
         }
+
         break;
       case "PLAY_CARDS":
         gameEngine.playCards(
