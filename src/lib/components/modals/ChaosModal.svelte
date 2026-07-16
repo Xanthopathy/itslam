@@ -17,6 +17,11 @@
 
   const isChallenger = $derived(flip?.challengerId === localPlayerId);
   const isDefender = $derived(flip?.defenderId === localPlayerId);
+  const reFlipCard = $derived(
+    gameState.players
+      .find((p) => p.id === localPlayerId)
+      ?.hand.find((c) => c.name === "ReFlip"),
+  );
 
   // Loser is whichever of challenger/defender didn't win. Mirrors
   // resolveItslamEffect's own loserId derivation in itslam.ts.
@@ -127,6 +132,16 @@
     });
   }
 
+  function playReFlip() {
+    if (!reFlipCard) return;
+
+    gameEngine.playCards(localPlayerId, [reFlipCard.id]);
+    dispatcher?.publish({
+      type: "PLAY_CARDS",
+      payload: { cardIds: [reFlipCard.id] },
+    });
+  }
+
   function predict(prediction: "looking" | "not_looking") {
     gameEngine.submitPrediction(localPlayerId, prediction);
     dispatcher?.publish({
@@ -229,14 +244,25 @@
         <div class="text-5xl">
           {flip.result === "looking" ? "[heat]" : "[butt]"}
         </div>
+
         <p class="text-sm text-gray-600">
           The sheep is <strong
             >{flip.result === "looking" ? "looking" : "not looking"}</strong
           > at you
         </p>
+
         <p class="text-xs text-gray-500">
           Anyone can play ReFlip in the next {secondsLeft}s...
         </p>
+
+        <button
+          type="button"
+          class="px-4 py-2 rounded-md bg-yellow-500 text-black font-semibold hover:bg-yellow-400 disabled:opacity-40"
+          disabled={!reFlipCard || secondsLeft === 0}
+          onclick={playReFlip}
+        >
+          Play ReFlip
+        </button>
       {:else if flip.phase === "resolved"}
         {#if !isWinner}
           <p class="text-sm text-gray-600">

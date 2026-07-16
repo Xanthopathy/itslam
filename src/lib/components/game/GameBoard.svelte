@@ -251,7 +251,8 @@
       onPlay={handleHandPlay}
       onDiscard={handleDiscard}
       mode={awaitingDiscard ? "discard" : "play"}
-      disabled={pendingPlay !== null}
+      disabled={pendingPlay !== null ||
+        gameState.currentTurnPlayerId !== localPlayerId}
     />
 
     <!-- end turn, only on your turn and not mid-target-selection -->

@@ -92,20 +92,6 @@ This section tracks execution issues without changing the main phase roadmap abo
 
 ### Issue Cards
 
-#### UX-002 - Non-active hand should be dim/disabled
-
-- **Area**: ux
-- **Severity**: medium
-- **Status**: todo
-- **Problem**: better display cards by disabling + dim hand when it's not your turn
-
-#### UX-003 - Re-flip interaction and messaging
-
-- **Area**: ux
-- **Severity**: medium
-- **Status**: todo
-- **Problem**: add play re-flip button during itslam grace period, have it be disabled unless the player has the card in their hand (flip result message should clarify better whether the guesser got it right or wrong)
-
 #### UX-004 - Selection compatibility rules
 
 - **Area**: ux
@@ -223,3 +209,17 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Severity**: medium
 - **Status**: todo
 - **Problem**: Logs should clarify rounds whenever all players finish their turn for one loop
+
+#### UX-002 - Non-active hand should be dim/disabled
+
+- **Area**: ux
+- **Severity**: medium
+- **Status**: todo
+- **Problem**: better display cards by disabling + dim hand when it's not your turn
+
+#### UX-003 - Re-flip interaction and messaging
+
+- **Area**: ux
+- **Severity**: medium
+- **Status**: todo
+- **Problem**: add play re-flip button during itslam grace period, have it be disabled unless the player has the card in their hand (flip result message should clarify better whether the guesser got it right or wrong)
