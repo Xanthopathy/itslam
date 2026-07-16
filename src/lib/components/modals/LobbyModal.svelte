@@ -143,15 +143,13 @@
   }
 
   function upsertJoinedPlayer(id: string, name: string): void {
-    const existing = joinedPlayers.findIndex((player) => player.id === id);
+    const existing = joinedPlayers.findIndex((p) => p.id === id);
     if (existing === -1) {
       joinedPlayers = [...joinedPlayers, { id, name }];
       return;
     }
     if (joinedPlayers[existing]?.name === name) return;
-    joinedPlayers = joinedPlayers.map((player) =>
-      player.id === id ? { id, name } : player,
-    );
+    joinedPlayers = joinedPlayers.map((p) => (p.id === id ? { id, name } : p));
   }
 
   async function submitName(options?: { isReconnect?: boolean }) {
@@ -249,13 +247,16 @@
     // Broadcast the resulting state (with the real shuffle already applied)
     // so every other client applies the exact same result instead of
     // computing their own with different randomness.
-    await networkClient.publishToRoom({
-      type: "SYNC_STATE",
-      payload: { state: $state.snapshot(gameEngine.state) },
-      roomCode,
-      playerId: localPlayerId,
-      sentAt: Date.now(),
-    }, { retain: true });
+    await networkClient.publishToRoom(
+      {
+        type: "SYNC_STATE",
+        payload: { state: $state.snapshot(gameEngine.state) },
+        roomCode,
+        playerId: localPlayerId,
+        sentAt: Date.now(),
+      },
+      { retain: true },
+    );
   }
 </script>
 

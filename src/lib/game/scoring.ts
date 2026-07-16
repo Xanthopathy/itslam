@@ -27,7 +27,7 @@ export function triggerFinalRound(state: GameState): void {
 
   state.isFinalRound = true;
   const currentIndex = state.players.findIndex(
-    (player) => player.id === state.currentTurnPlayerId,
+    (p) => p.id === state.currentTurnPlayerId,
   );
   const nextIndex =
     currentIndex === -1 ? -1 : (currentIndex + 1) % state.players.length;
@@ -49,14 +49,13 @@ export function triggerFinalRound(state: GameState): void {
  */
 export function getGameScore(state: GameState): Record<string, number> {
   const score: Record<string, number> = {};
-  state.players.forEach((player) => {
-    const sheepScore = player.field.reduce(
+  state.players.forEach((p) => {
+    const sheepScore = p.field.reduce(
       (accumulator, sheep) => accumulator + calculateSheepValue(sheep),
       0,
     );
-    const itslamPenalty =
-      player.hand.filter((card) => card.type === "itslam").length * 3;
-    score[player.name] = sheepScore - itslamPenalty;
+    const itslamPenalty = p.hand.filter((c) => c.type === "itslam").length * 3;
+    score[p.name] = sheepScore - itslamPenalty;
   });
   return score;
 }
@@ -67,5 +66,5 @@ export function getGameScore(state: GameState): Record<string, number> {
 export function getWinner(state: GameState): Player[] {
   const scores = getGameScore(state);
   const highestScore = Math.max(...Object.values(scores));
-  return state.players.filter((player) => scores[player.name] === highestScore);
+  return state.players.filter((p) => scores[p.name] === highestScore);
 }

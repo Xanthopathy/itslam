@@ -298,7 +298,7 @@ export function handleYoinkEntireHand(
   loser: Player,
 ): boolean {
   const stolen = loser.hand.splice(0, loser.hand.length);
-  stolen.forEach((card) => addCardToHand(winner, card));
+  stolen.forEach((c) => addCardToHand(winner, c));
 
   log(state, `${winner.name} yoinked ${loser.name}'s entire hand`);
   return true;

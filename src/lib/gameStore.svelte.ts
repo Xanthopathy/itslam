@@ -96,11 +96,11 @@ class GameEngine {
     this.state.hostId = this.state.players[0].id; // First player in the lobby is the host as they created the lobby/game
     this.state.roomCode = roomCode ?? this.state.roomCode;
 
-    this.state.players.forEach((player) => {
+    this.state.players.forEach((p) => {
       for (let i = 0; i < 5; i++) {
         const card = fullDeck.pop();
         if (card) {
-          addCardToHand(player, card);
+          addCardToHand(p, card);
         }
       }
     });
@@ -229,7 +229,7 @@ class GameEngine {
 
   private getNextPlayer(): Player | undefined {
     const currentIndex = this.state.players.findIndex(
-      (player) => player.id === this.state.currentTurnPlayerId,
+      (p) => p.id === this.state.currentTurnPlayerId,
     );
     if (currentIndex === -1) return undefined; // Not actually needed since we don't plan removals
     const nextIndex = (currentIndex + 1) % this.state.players.length;
