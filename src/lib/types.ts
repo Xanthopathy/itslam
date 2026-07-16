@@ -26,7 +26,7 @@ export type CardType = "head" | "butt" | "action" | "modifier" | "itslam";
 // Head/Butt: "White Sheep", "Orange Butt". Concat from color and type.
 export type Card = {
   id: string;
-  name: string;
+  name?: string; // optional, not for sheep parts
   type: CardType;
   color?: CardColor; // optional, only for sheeps
 };

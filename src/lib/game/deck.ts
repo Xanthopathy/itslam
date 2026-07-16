@@ -44,13 +44,11 @@ export function createInitialDeck(): Card[] {
   colors.forEach((color) => {
     deck.push({
       id: `head-${crypto.randomUUID()}`,
-      name: `${color} Head`,
       type: "head",
       color: color,
     });
     deck.push({
       id: `butt-${crypto.randomUUID()}`,
-      name: `${color} Butt`,
       type: "butt",
       color: color,
     });

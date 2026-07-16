@@ -60,11 +60,11 @@
     aria-pressed={selected}
   >
     <span class="uppercase tracking-wide opacity-80">{card.type}</span>
-    <span class="leading-tight">
-      {card.name}
+    <span class="leading-tight uppercase">
       {#if isSheepPart}
-        <br />
         <span class="opacity-80">{getColorLabel(card.color)}</span>
+      {:else}
+        {card.name}
       {/if}
     </span>
   </button>
@@ -80,11 +80,11 @@
     ].join(" ")}
   >
     <span class="uppercase tracking-wide opacity-80">{card.type}</span>
-    <span class="leading-tight">
-      {card.name}
+    <span class="leading-tight uppercase">
       {#if isSheepPart}
-        <br />
         <span class="opacity-80">{getColorLabel(card.color)}</span>
+      {:else}
+        {card.name}
       {/if}
     </span>
   </div>
