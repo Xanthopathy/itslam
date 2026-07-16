@@ -26,6 +26,7 @@
 
   const gameState = gameEngine.state;
   const LOBBY_SESSION_KEY = "itslam_lobby_session";
+  const LAST_PLAYER_NAME_KEY = "itslam_last_player_name";
 
   type Screen = "landing" | "enter-name" | "waiting-room";
   let screen = $state<Screen>("landing");
@@ -39,6 +40,15 @@
   // Joined players seen so far, keyed by id. Not part of GameState - this is
   // purely a pre-InitGame client-side list built from PLAYER_JOINED messages
   let joinedPlayers = $state<{ id: string; name: string }[]>([]);
+
+  // Restore the most recently used name for new joins and new rooms.
+  $effect(() => {
+    const savedName = localStorage.getItem(LAST_PLAYER_NAME_KEY);
+
+    if (savedName && !playerNameInput) {
+      playerNameInput = savedName;
+    }
+  });
 
   // On mount: if the URL already has ?room=, skip the landing screen
   // entirely and go straight to name entry as a joiner
@@ -56,15 +66,18 @@
             isHosting?: boolean;
             playerName?: string;
           };
-          isReturningHost =
-            session.playerId === localPlayerId &&
-            session.roomCode === detected &&
-            session.isHosting === true;
-          if (isReturningHost && session.playerName) {
+
+          const isReturningPlayer =
+            session.playerId === localPlayerId && session.roomCode === detected;
+
+          isReturningHost = isReturningPlayer && session.isHosting === true;
+
+          if (isReturningPlayer && session.playerName) {
             playerNameInput = session.playerName;
             isReconnecting = true;
+
             setTimeout(() => {
-              if (isHosting && screen === "enter-name") {
+              if (screen === "enter-name") {
                 void submitName({ isReconnect: true });
               }
             }, 0);
@@ -145,6 +158,8 @@
 
     const name = playerNameInput.trim();
     if (!name) return;
+
+    localStorage.setItem(LAST_PLAYER_NAME_KEY, name);
 
     submitError = "";
     isSubmitting = true;

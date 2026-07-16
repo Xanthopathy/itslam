@@ -40,7 +40,8 @@
   // OTHER clients' actions take effect here (LobbyModal's own subscription,
   // set up during join, only lasts until it unmounts post-handoff).
   $effect(() => {
-    if (!roomCode || !dispatcher) return;
+    if (!roomCode || !dispatcher || gameState.status === "lobby") return;
+
     let active = true;
 
     void (async () => {

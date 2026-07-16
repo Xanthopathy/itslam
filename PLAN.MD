@@ -111,13 +111,6 @@ This section tracks execution issues without changing the main phase roadmap abo
 
 ### Issue Cards
 
-#### NET-001 - Rejoin on refresh
-
-- **Area**: networking
-- **Severity**: high
-- **Status**: todo
-- **Problem**: host and non-host refresh should attempt to rejoin the ongoing game (non-host retain their last entered game in enter name field if not currently in a game, and rejoins the game with their existing game name if currently in a game)
-
 #### UX-001 - Turn loop clarity in logs
 
 - **Area**: ux
@@ -242,3 +235,10 @@ This section tracks execution issues without changing the main phase roadmap abo
   \_reconnect @ mqtt.esm.js:3
   (anonymous) @ mqtt.esm.js:3
 ```
+
+#### NET-001 - Rejoin on refresh
+
+- **Area**: networking
+- **Severity**: high
+- **Status**: todo
+- **Problem**: host and non-host refresh should attempt to rejoin the ongoing game (non-host retain their last entered game in enter name field if not currently in a game, and rejoins the game with their existing game name if currently in a game)

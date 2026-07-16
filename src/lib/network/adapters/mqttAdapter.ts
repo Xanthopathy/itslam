@@ -70,6 +70,12 @@ export function createMqttAdapter(
 
         const handleError = (error: Error) => {
           mqttClient.off("connect", handleConnect);
+
+          if (client === mqttClient) {
+            client = undefined;
+          }
+
+          mqttClient.end(true);
           reject(error);
         };
 
