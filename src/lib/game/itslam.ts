@@ -37,7 +37,7 @@ export function playItslamCard(
     challengerId: player.id,
     defenderId: targetPlayer?.id,
     cardId: card.id,
-    cardName: card.name,
+    cardName: card.name ?? "",
     phase: "awaiting_prediction",
     reFlipCount: 0,
   };
