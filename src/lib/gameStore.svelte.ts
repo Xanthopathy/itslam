@@ -29,6 +29,7 @@ import {
 
 class GameEngine {
   state = $state<GameState>({
+    stateVersion: 0,
     players: [],
     drawPile: [],
     discardPile: [],
@@ -45,6 +46,7 @@ class GameEngine {
   public loadState(newState: GameState): void {
     // Preserve the existing reactive proxy reference and update fields in-place
     // so all derived consumers (that captured `gameEngine.state`) stay in sync.
+    this.state.stateVersion = newState.stateVersion ?? 0;
     this.state.players = newState.players;
     this.state.drawPile = newState.drawPile;
     this.state.discardPile = newState.discardPile;

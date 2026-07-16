@@ -74,6 +74,7 @@ export type CoinFlipState = {
 };
 
 export type GameState = {
+  stateVersion: number;
   players: Player[];
   drawPile: Card[];
   discardPile: Card[];
