@@ -26,6 +26,7 @@ import {
   log,
   removeCardFromHand,
 } from "./game/utils";
+import { saveGameStateSnapshot } from "./network/persistence";
 
 class GameEngine {
   state = $state<GameState>({
@@ -44,6 +45,8 @@ class GameEngine {
   // ========== GAME LIFECYCLE ==========
 
   public loadState(newState: GameState): void {
+    if ((newState.stateVersion ?? 0) < this.state.stateVersion) return;
+
     // Preserve the existing reactive proxy reference and update fields in-place
     // so all derived consumers (that captured `gameEngine.state`) stay in sync.
     this.state.stateVersion = newState.stateVersion ?? 0;
@@ -58,12 +61,21 @@ class GameEngine {
     this.state.isFinalRound = newState.isFinalRound;
     this.state.finalRoundTriggeredBy = newState.finalRoundTriggeredBy;
     this.state.hostId = newState.hostId;
+    saveGameStateSnapshot($state.snapshot(this.state));
+  }
+
+  private commitStateChange(): void {
+    this.state.stateVersion += 1;
+    saveGameStateSnapshot($state.snapshot(this.state));
   }
 
   // IMPORTANT: Because we're using MQTT, the host will be the one to run InitGame() and then send the full deck to all clients. This ensures that all clients have the same deck order and can validate game state independently.
   // The host will broadcast every other RNG event as well.
   // TODO: Make sure to freeze the game if the host disconnects
-  public InitGame(players: { id: string; name: string }[]): void {
+  public InitGame(
+    players: { id: string; name: string }[],
+    roomCode?: string,
+  ): void {
     if (this.state.status === "playing") return;
 
     const fullDeck = shuffle(createInitialDeck());
@@ -78,6 +90,7 @@ class GameEngine {
       };
     });
     this.state.hostId = this.state.players[0].id; // First player in the lobby is the host as they created the lobby/game
+    this.state.roomCode = roomCode ?? this.state.roomCode;
 
     this.state.players.forEach((player) => {
       for (let i = 0; i < 5; i++) {
@@ -104,6 +117,7 @@ class GameEngine {
     this.state.status = "playing";
     log(this.state, `Game started! ${firstPlayer.name} goes first`);
     this.startTurn(firstPlayer);
+    this.commitStateChange();
   }
 
   /**
@@ -187,10 +201,12 @@ class GameEngine {
         this.state,
         `Game over! ${winnerNames} ${verb} with ${scores[winners[0].name]} points (${scoreStr})`,
       );
+      this.commitStateChange();
       return;
     }
 
     this.startTurn(nextPlayer);
+    this.commitStateChange();
   }
 
   private getNextPlayer(): Player | undefined {
@@ -364,6 +380,8 @@ class GameEngine {
       for (const card of cards) discardCard(this.state, player, card);
     }
 
+    this.commitStateChange();
+
     return true;
   }
 
@@ -373,7 +391,9 @@ class GameEngine {
     playerId: string,
     prediction: "looking" | "not_looking",
   ): boolean {
-    return submitPrediction(this.state, playerId, prediction);
+    const success = submitPrediction(this.state, playerId, prediction);
+    if (success) this.commitStateChange();
+    return success;
   }
 
   public generateFlipResult(): "looking" | "not_looking" {
@@ -384,11 +404,17 @@ class GameEngine {
     playerId: string,
     result: "looking" | "not_looking",
   ): boolean {
-    return submitFlipResult(this.state, playerId, result);
+    const success = submitFlipResult(this.state, playerId, result);
+    if (success) this.commitStateChange();
+    return success;
   }
 
   public finalizeCoinFlip(playerId: string): void {
+    const previousPhase = this.state.activeCoinFlip?.phase;
     finalizeCoinFlip(this.state, playerId);
+    if (previousPhase !== this.state.activeCoinFlip?.phase) {
+      this.commitStateChange();
+    }
   }
 
   public resolveItslamEffect(
@@ -397,13 +423,15 @@ class GameEngine {
     targetPartIndices?: number[],
     discardIndices?: number[],
   ): boolean {
-    return resolveItslamEffect(
+    const success = resolveItslamEffect(
       this.state,
       playerId,
       sheepIndices,
       targetPartIndices,
       discardIndices,
     );
+    if (success) this.commitStateChange();
+    return success;
   }
 
   // ========== SCORING & STATE PASSTHROUGHS ==========

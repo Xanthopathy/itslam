@@ -9,6 +9,7 @@
     sanitizeRoomCode,
   } from "../../network/topics";
   import type { RoomActionMessage } from "../../network/messages";
+  import { loadGameStateSnapshot } from "../../network/persistence";
 
   type Props = {
     // Persistent per-browser identity, generated/stored by the root page
@@ -181,6 +182,9 @@
       await networkClient.connect();
       await networkClient.subscribeToRoom(roomCode, handleIncomingMessage);
 
+      const savedGameState = loadGameStateSnapshot(roomCode);
+      if (savedGameState) gameEngine.loadState(savedGameState);
+
       await publishPlayerJoined(name);
 
       localStorage.setItem(
@@ -199,6 +203,14 @@
 
       await networkClient.publishToRoom({
         type: "PLAYER_LIST_REQUEST",
+        payload: {},
+        roomCode,
+        playerId: localPlayerId,
+        sentAt: Date.now(),
+      });
+
+      await networkClient.publishToRoom({
+        type: "REQUEST_SYNC_STATE",
         payload: {},
         roomCode,
         playerId: localPlayerId,
@@ -229,7 +241,10 @@
   async function startGame() {
     if (!canStart) return;
 
-    gameEngine.InitGame(joinedPlayers.map((p) => ({ id: p.id, name: p.name })));
+    gameEngine.InitGame(
+      joinedPlayers.map((p) => ({ id: p.id, name: p.name })),
+      roomCode,
+    );
 
     // Broadcast the resulting state (with the real shuffle already applied)
     // so every other client applies the exact same result instead of
@@ -240,7 +255,7 @@
       roomCode,
       playerId: localPlayerId,
       sentAt: Date.now(),
-    });
+    }, { retain: true });
   }
 </script>
 

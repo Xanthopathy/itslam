@@ -112,11 +112,11 @@ export function createMqttAdapter(
       });
     },
 
-    async publish(topic, payload) {
+    async publish(topic, payload, options) {
       const mqttClient = requireClient();
 
       await new Promise<void>((resolve, reject) => {
-        mqttClient.publish(topic, payload, (error) => {
+        mqttClient.publish(topic, payload, { retain: options?.retain ?? false }, (error) => {
           if (error) {
             reject(error);
             return;

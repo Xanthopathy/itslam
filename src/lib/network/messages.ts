@@ -32,6 +32,7 @@ export type RoomAction =
       };
     }
   | { type: "SYNC_STATE"; payload: { state: GameState } }
+  | { type: "REQUEST_SYNC_STATE"; payload: Record<string, never> }
   | {
       type: "PLAYER_JOINED";
       payload: { playerName: string };
@@ -55,6 +56,7 @@ const VALID_ACTION_TYPES = new Set<RoomActionType>([
   "FINALIZE_COIN_FLIP",
   "RESOLVE_ITSLAM",
   "SYNC_STATE",
+  "REQUEST_SYNC_STATE",
   "PLAYER_JOINED",
   "PLAYER_LIST_REQUEST",
 ]);

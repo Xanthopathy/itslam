@@ -38,6 +38,10 @@ export function createDispatcher(
       playerId: localPlayerId,
       sentAt: Date.now(),
     });
+
+    if (action.type !== "SYNC_STATE" && action.type !== "REQUEST_SYNC_STATE") {
+      publishRetainedStateIfHost();
+    }
   }
 
   async function awaitSyncState(): Promise<void> {
@@ -47,7 +51,13 @@ export function createDispatcher(
       roomCode,
       playerId: localPlayerId,
       sentAt: Date.now(),
-    });
+    }, { retain: true });
+  }
+
+  function publishRetainedStateIfHost(): void {
+    if (isHost() && gameEngine.state.status !== "lobby") {
+      void awaitSyncState();
+    }
   }
 
   /**
@@ -62,19 +72,6 @@ export function createDispatcher(
 
     switch (message.type) {
       case "PLAYER_JOINED":
-        const isAnotherPlayer = message.playerId !== localPlayerId;
-        const localClientHasGameState = gameEngine.state.status === "playing";
-        const localClientCanProvideState =
-          isHost() || gameEngine.state.hostId === message.playerId;
-
-        if (
-          isAnotherPlayer &&
-          localClientHasGameState &&
-          localClientCanProvideState
-        ) {
-          void awaitSyncState();
-        }
-
         break;
       case "PLAY_CARDS":
         gameEngine.playCards(
@@ -85,21 +82,26 @@ export function createDispatcher(
           message.payload.targetPartIndex,
           message.payload.chosenIndices,
         );
+        publishRetainedStateIfHost();
         break;
       case "END_TURN":
         gameEngine.endTurn(message.playerId, message.payload.cardIdsToDiscard);
+        publishRetainedStateIfHost();
         break;
       case "SUBMIT_PREDICTION":
         gameEngine.submitPrediction(
           message.playerId,
           message.payload.prediction,
         );
+        publishRetainedStateIfHost();
         break;
       case "SUBMIT_FLIP_RESULT":
         gameEngine.submitFlipResult(message.playerId, message.payload.result);
+        publishRetainedStateIfHost();
         break;
       case "FINALIZE_COIN_FLIP":
         gameEngine.finalizeCoinFlip(message.playerId);
+        publishRetainedStateIfHost();
         break;
       case "RESOLVE_ITSLAM":
         gameEngine.resolveItslamEffect(
@@ -108,9 +110,18 @@ export function createDispatcher(
           message.payload.targetPartIndices,
           message.payload.discardIndices,
         );
+        publishRetainedStateIfHost();
         break;
       case "SYNC_STATE":
         gameEngine.loadState(message.payload.state);
+        break;
+      case "REQUEST_SYNC_STATE":
+        if (
+          message.playerId !== localPlayerId &&
+          gameEngine.state.status !== "lobby"
+        ) {
+          void awaitSyncState();
+        }
         break;
       // INIT_GAME / PLAYER_JOINED are handled by the lobby or host flow.
       default:

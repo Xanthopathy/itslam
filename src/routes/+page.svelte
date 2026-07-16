@@ -49,6 +49,13 @@
         await networkClient.connect();
         if (!active) return;
         await networkClient.subscribeToRoom(roomCode, dispatcher.applyIncoming);
+        await networkClient.publishToRoom({
+          type: "REQUEST_SYNC_STATE",
+          payload: {},
+          roomCode,
+          playerId: localPlayerId,
+          sentAt: Date.now(),
+        });
       } catch (error) {
         console.error("Unable to connect to the game room:", error);
       }

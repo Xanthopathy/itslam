@@ -10,7 +10,11 @@ export type RealtimeAdapter = {
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   subscribe: (topic: string, onMessage: (raw: string) => void) => Promise<void>;
-  publish: (topic: string, payload: string) => Promise<void>;
+  publish: (
+    topic: string,
+    payload: string,
+    options?: { retain?: boolean },
+  ) => Promise<void>;
 };
 
 export class NetworkClient {
@@ -77,9 +81,12 @@ export class NetworkClient {
     this.handlers.get(topic)?.delete(onMessage);
   }
 
-  public async publishToRoom(message: RoomActionMessage): Promise<void> {
+  public async publishToRoom(
+    message: RoomActionMessage,
+    options?: { retain?: boolean },
+  ): Promise<void> {
     const topic = buildRoomTopic(message.roomCode);
     const payload = encodeMessage(message);
-    await this.adapter.publish(topic, payload);
+    await this.adapter.publish(topic, payload, options);
   }
 }
