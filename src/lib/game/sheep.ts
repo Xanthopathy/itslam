@@ -56,20 +56,14 @@ export function swapSheepPart(
   const oldPart = newParts[targetPartIndex];
   newParts[targetPartIndex] = partFromHand;
 
-  const candidate: Sheep = {
-    parts: newParts,
-    modifier: targetSheep.modifier,
-  };
-  if (!isValidSheep(candidate)) return false;
+  const naturalCandidate: Sheep = { parts: newParts };
+  if (!isValidSheep(naturalCandidate)) return false;
 
   const oldModifier = targetSheep.modifier;
-  const modifierNowRedundant =
-    oldModifier && !canApplyModifier(candidate, oldModifier);
-
   targetSheep.parts = newParts;
   addCardToHand(player, oldPart);
 
-  if (modifierNowRedundant) {
+  if (oldModifier) {
     targetSheep.modifier = undefined;
     addCardToHand(player, oldModifier);
   }
