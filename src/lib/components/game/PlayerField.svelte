@@ -40,16 +40,18 @@
       {playerName}'s Field
     {/if}
   </h3>
-  <div class="flex gap-3 flex-wrap min-h-[6rem]">
+  <div class="flex gap-3 flex-wrap min-h-24">
     {#each field as sheep, index (index)}
-      <SheepComponent
-        {sheep}
-        size="sm"
-        onClick={onSheepClick ? () => onSheepClick(index) : undefined}
-        onPartClick={onPartClick
-          ? (partIndex) => onPartClick(index, partIndex)
-          : undefined}
-      />
+      <div class="rounded-2xl border-4 border-gray-700 bg-gray-500 shadow-sm">
+        <SheepComponent
+          {sheep}
+          size="sm"
+          onClick={onSheepClick ? () => onSheepClick(index) : undefined}
+          onPartClick={onPartClick
+            ? (partIndex) => onPartClick(index, partIndex)
+            : undefined}
+        />
+      </div>
     {/each}
     {#if field.length === 0}
       <span class="text-gray-400 text-sm italic">No sheep yet</span>

@@ -33,7 +33,6 @@
 
   const isValid = $derived(isValidSheep(sheep));
   const label = $derived(describeSheep(sheep));
-  const points = $derived(calculateSheepValue(sheep));
 </script>
 
 {#if onClick && !onPartClick}
@@ -63,13 +62,6 @@
         {sheep.modifier.name}
       </span>
     {/if}
-
-    <!-- point value -->
-    <span
-      class="absolute -top-2 -right-2 rounded-full bg-black text-white text-[10px] w-5 h-5 flex items-center justify-center shadow"
-    >
-      {points}
-    </span>
 
     <!-- protection badge: ONLY rendered when a parent is actively
          resolving Wolf/Wheat and passes this in. Never shown otherwise. -->
@@ -116,13 +108,6 @@
         {sheep.modifier.name}
       </span>
     {/if}
-
-    <!-- point value -->
-    <span
-      class="absolute -top-2 -right-2 rounded-full bg-black text-white text-[10px] w-5 h-5 flex items-center justify-center shadow"
-    >
-      {points}
-    </span>
 
     <!-- protection badge: ONLY rendered when a parent is actively
          resolving Wolf/Wheat and passes this in. Never shown otherwise. -->

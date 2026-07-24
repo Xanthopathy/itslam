@@ -92,13 +92,6 @@ This section tracks execution issues without changing the main phase roadmap abo
 
 ### Issue Cards
 
-#### UI-004 - Sheep visual separation
-
-- **Area**: visuals
-- **Severity**: low
-- **Status**: todo
-- **Problem**: each sheep should be better segregated with some clear border for each sheep
-
 #### UI-005 - Grammar fix
 
 - **Area**: ux
@@ -235,3 +228,10 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Severity**: low
 - **Status**: done
 - **Problem**: rainbow is not actually rainbow (currently only shows red orange yellow pink purple)
+
+#### UI-004 - Sheep visual separation
+
+- **Area**: visuals
+- **Severity**: low
+- **Status**: done
+- **Problem**: each sheep should be better segregated with some clear border for each sheep
