@@ -92,13 +92,6 @@ This section tracks execution issues without changing the main phase roadmap abo
 
 ### Issue Cards
 
-#### UI-002 - Center text on field cards
-
-- **Area**: visuals
-- **Severity**: low
-- **Status**: todo
-- **Problem**: center card text on the field (the cards that became sheep) too (currently only cards in hand are centered)
-
 #### UI-003 - True rainbow styling
 
 - **Area**: visuals
@@ -224,3 +217,10 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Status**: todo
 - **Problem**: add basic temporary card icons (head, butt, paint, wolf, etc) in place of "black Butt", "rainbow Head" (they should be centered to have good margins between top text and bottom text on the card)
 - **Note**: partially implemented; icons are present but vertical centering still needs refinement for some emoji glyphs.
+
+#### UI-002 - Center text on field cards
+
+- **Area**: visuals
+- **Severity**: low
+- **Status**: todo
+- **Problem**: center card text on the field (the cards that became sheep) too (currently only cards in hand are centered)

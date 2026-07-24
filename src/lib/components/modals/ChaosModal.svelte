@@ -238,7 +238,7 @@
           </p>
         {/if}
       {:else if flip.phase === "flipping"}
-        <div class="text-5xl animate-spin">🪙 [coin]</div>
+        <div class="text-5xl animate-spin">🟡</div>
         <p class="text-sm text-gray-600">Flipping the coin...</p>
       {:else if flip.phase === "grace_period"}
         <div class="text-5xl">
