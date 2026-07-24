@@ -141,27 +141,38 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Status**: todo
 - **Problem**: Make a museum for reviewing graphics
 
+### LOGIC-003 - Reflip
+
+- **Area**: ux
+- **Severity**: high
+- **Status**: todo
+- **Problem**:
+  - ITSLAM card play is not announced in the game log.
+  - The game can freeze at the third flip screen.
+  - ReFlip sometimes does not work even when a ReFlip card is in hand (possibly because a won result cannot be re-flipped).
+  - ReFlip result wording is vague and does not handle player-specific broadcast state.
+
 ### Completed Log
 
 #### LOGIC-002 - Card not found after play
 
 - **Area**: game-logic
 - **Severity**: high
-- **Status**: todo
+- **Status**: done
 - **Problem**: playing cards successfully gives this error: `utils.ts:54 Card butt-41c98a85-5df2-45d1-8338-a182c3f647d6 not found in player ec9ac264-342d-40f7-88e7-ca4f4a84cc2a's hand.` (happens to action/modifier/part/itslam/etc cards, whether the player played 1 or multiple cards at once)
 
 #### LOGIC-001 - Discard limit off by one
 
 - **Area**: game-logic
 - **Severity**: high
-- **Status**: todo
+- **Status**: done
 - **Problem**: discard logic off by one, player discards 1 too many and can stay at 7 max instead of 6
 
 #### NET-002 - Recurring MQTT reconnect error
 
 - **Area**: networking
 - **Severity**: high
-- **Status**: todo
+- **Status**: done
 - **Problem**: this error randomly started popping up every second in console without touching anything for both players after playing a couple turns (npm run dev doesn't report anything):
 
 ```
@@ -179,42 +190,42 @@ This section tracks execution issues without changing the main phase roadmap abo
 
 - **Area**: networking
 - **Severity**: high
-- **Status**: todo
+- **Status**: done
 - **Problem**: host and non-host refresh should attempt to rejoin the ongoing game (non-host retain their last entered game in enter name field if not currently in a game, and rejoins the game with their existing game name if currently in a game)
 
 #### UX-001 - Turn loop clarity in logs
 
 - **Area**: ux
 - **Severity**: medium
-- **Status**: todo
+- **Status**: done
 - **Problem**: Logs should clarify rounds whenever all players finish their turn for one loop
 
 #### UX-002 - Non-active hand should be dim/disabled
 
 - **Area**: ux
 - **Severity**: medium
-- **Status**: todo
+- **Status**: done
 - **Problem**: better display cards by disabling + dim hand when it's not your turn
 
 #### UX-003 - Re-flip interaction and messaging
 
 - **Area**: ux
 - **Severity**: medium
-- **Status**: todo
+- **Status**: done
 - **Problem**: add play re-flip button during itslam grace period, have it be disabled unless the player has the card in their hand (flip result message should clarify better whether the guesser got it right or wrong)
 
 #### UX-004 - Selection compatibility rules
 
 - **Area**: ux
 - **Severity**: medium
-- **Status**: todo
+- **Status**: done
 - **Problem**: prevent multiple non-compatible selection: If you first select an action card, selecting any other card should deselect the first action card, same rule applies if any newly selected card has no situation where they can be played together. More lax on head/butt/modifier cards though as the player can select the 2-3 cards to form a sheep at any point in the sequence.
 
 #### UI-001 - Temporary card icons
 
 - **Area**: visuals
 - **Severity**: medium
-- **Status**: todo
+- **Status**: done
 - **Problem**: add basic temporary card icons (head, butt, paint, wolf, etc) in place of "black Butt", "rainbow Head" (they should be centered to have good margins between top text and bottom text on the card)
 - **Note**: partially implemented; icons are present but vertical centering still needs refinement for some emoji glyphs.
 
@@ -222,5 +233,5 @@ This section tracks execution issues without changing the main phase roadmap abo
 
 - **Area**: visuals
 - **Severity**: low
-- **Status**: todo
+- **Status**: done
 - **Problem**: center card text on the field (the cards that became sheep) too (currently only cards in hand are centered)
