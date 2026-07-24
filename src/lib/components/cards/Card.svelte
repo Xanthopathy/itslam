@@ -36,6 +36,54 @@
     lg: "w-28 h-40 text-[16px] p-3",
   };
 
+  const ICON_CLASSES: Record<string, string> = {
+    sm: "text-2xl",
+    md: "text-4xl",
+    lg: "text-5xl",
+  };
+
+  function getCardIcon(card: Card) {
+    if (card.type === "head") return "🐑";
+    if (card.type === "butt") return "🍑";
+
+    switch (card.type) {
+      case "modifier":
+        if (card.name === "Paint") return "🎨";
+        if (card.name === "Franken") return "⚡";
+        return "🧩";
+      case "action":
+        switch (card.name) {
+          case "Wheat":
+            return "🌾";
+          case "Wolf":
+            return "🐺";
+          case "Yoink":
+            return "🤏";
+          case "ReFlip":
+            return "🔁";
+          default:
+            return "🎯";
+        }
+      case "itslam":
+        switch (card.name) {
+          case "Lure 2 Sheep":
+            return "🧲";
+          case "Remove 2 Sheep":
+            return "🗑️";
+          case "Yoink Entire Hand":
+            return "👐";
+          case "Halve 2 Sheep":
+            return "✂️";
+          case "Recover 1 Sheep":
+            return "♻️";
+          default:
+            return "🎲";
+        }
+      default:
+        return "❓";
+    }
+  }
+
   function handleClick() {
     if (disabled) return;
     onClick?.(card);
@@ -46,7 +94,7 @@
   <button
     type="button"
     class={[
-      "relative flex flex-col justify-between rounded-lg shadow-md transition-transform",
+      "relative flex flex-col items-center justify-between gap-2 rounded-lg shadow-md transition-transform",
       "font-semibold select-none",
       SIZE_CLASSES[size],
       isSheepPart ? getColorClasses(card.color) : TYPE_STYLES[card.type],
@@ -60,7 +108,13 @@
     aria-pressed={selected}
   >
     <span class="uppercase tracking-wide opacity-80">{card.type}</span>
-    <span class="leading-tight uppercase">
+    <span
+      class={[
+        "flex flex-1 h-full items-center justify-center leading-none",
+        ICON_CLASSES[size],
+      ].join(" ")}>{getCardIcon(card)}</span
+    >
+    <span class="leading-tight uppercase text-center">
       {#if isSheepPart}
         <span class="opacity-80">{getColorLabel(card.color)}</span>
       {:else}
@@ -71,7 +125,7 @@
 {:else}
   <div
     class={[
-      "relative flex flex-col justify-between rounded-lg shadow-md transition-transform",
+      "relative flex flex-col items-center justify-between gap-2 rounded-lg shadow-md transition-transform",
       "font-semibold select-none",
       SIZE_CLASSES[size],
       isSheepPart ? getColorClasses(card.color) : TYPE_STYLES[card.type],
@@ -80,7 +134,13 @@
     ].join(" ")}
   >
     <span class="uppercase tracking-wide opacity-80">{card.type}</span>
-    <span class="leading-tight uppercase">
+    <span
+      class={[
+        "flex flex-1 h-full items-center justify-center leading-none",
+        ICON_CLASSES[size],
+      ].join(" ")}>{getCardIcon(card)}</span
+    >
+    <span class="leading-tight uppercase text-center">
       {#if isSheepPart}
         <span class="opacity-80">{getColorLabel(card.color)}</span>
       {:else}

@@ -92,20 +92,6 @@ This section tracks execution issues without changing the main phase roadmap abo
 
 ### Issue Cards
 
-#### UX-004 - Selection compatibility rules
-
-- **Area**: ux
-- **Severity**: medium
-- **Status**: todo
-- **Problem**: prevent multiple non-compatible selection: If you first select an action card, selecting any other card should deselect the first action card, same rule applies if any newly selected card has no situation where they can be played together. More lax on head/butt/modifier cards though as the player can select the 2-3 cards to form a sheep at any point in the sequence.
-
-#### UI-001 - Temporary card icons
-
-- **Area**: visuals
-- **Severity**: medium
-- **Status**: todo
-- **Problem**: add basic temporary card icons (head, butt, paint, wolf, etc) in place of "black Butt", "rainbow Head" (they should be centered to have good margins between top text and bottom text on the card)
-
 #### UI-002 - Center text on field cards
 
 - **Area**: visuals
@@ -223,3 +209,18 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Severity**: medium
 - **Status**: todo
 - **Problem**: add play re-flip button during itslam grace period, have it be disabled unless the player has the card in their hand (flip result message should clarify better whether the guesser got it right or wrong)
+
+#### UX-004 - Selection compatibility rules
+
+- **Area**: ux
+- **Severity**: medium
+- **Status**: todo
+- **Problem**: prevent multiple non-compatible selection: If you first select an action card, selecting any other card should deselect the first action card, same rule applies if any newly selected card has no situation where they can be played together. More lax on head/butt/modifier cards though as the player can select the 2-3 cards to form a sheep at any point in the sequence.
+
+#### UI-001 - Temporary card icons
+
+- **Area**: visuals
+- **Severity**: medium
+- **Status**: todo
+- **Problem**: add basic temporary card icons (head, butt, paint, wolf, etc) in place of "black Butt", "rainbow Head" (they should be centered to have good margins between top text and bottom text on the card)
+- **Note**: partially implemented; icons are present but vertical centering still needs refinement for some emoji glyphs.
