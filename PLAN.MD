@@ -92,13 +92,6 @@ This section tracks execution issues without changing the main phase roadmap abo
 
 ### Issue Cards
 
-#### UI-003 - True rainbow styling
-
-- **Area**: visuals
-- **Severity**: low
-- **Status**: todo
-- **Problem**: rainbow is not actually rainbow (currently only shows red orange yellow pink purple)
-
 #### UI-004 - Sheep visual separation
 
 - **Area**: visuals
@@ -235,3 +228,10 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Severity**: low
 - **Status**: done
 - **Problem**: center card text on the field (the cards that became sheep) too (currently only cards in hand are centered)
+
+#### UI-003 - True rainbow styling
+
+- **Area**: visuals
+- **Severity**: low
+- **Status**: done
+- **Problem**: rainbow is not actually rainbow (currently only shows red orange yellow pink purple)

@@ -22,8 +22,7 @@ const COLOR_CLASSES: Record<CardColor, string> = {
   green: "bg-green-600 text-white",
   red: "bg-red-500 text-white",
   black: "bg-black text-white",
-  rainbow:
-    "bg-gradient-to-br from-red-500 via-yellow-400 via-green-500 via-blue-500 to-purple-500 text-white",
+  rainbow: "rainbow-gradient text-white",
 };
 
 /** Human-readable label, e.g. "Rainbow", "Mint" */

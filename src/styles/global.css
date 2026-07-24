@@ -49,3 +49,16 @@ body {
 }
 
 /* TODO: Add more utility classes as needed */
+
+.rainbow-gradient {
+  background-image: linear-gradient(
+    135deg,
+    #ef4444 0%,
+    #fb923c 16.6%,
+    #facc15 33.3%,
+    #4ade80 50%,
+    #38bdf8 66.6%,
+    #a78bfa 83.3%,
+    #f472b6 100%
+  );
+}
