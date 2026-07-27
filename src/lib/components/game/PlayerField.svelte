@@ -24,6 +24,15 @@
     onPartClick,
     onSelectAsTarget,
   }: Props = $props();
+
+  const fieldLabel = $derived(
+    playerName === "You" ? "Your Field" : `${playerName}'s Field`,
+  );
+  const targetFieldLabel = $derived(
+    playerName === "You"
+      ? "Your Field (click to target)"
+      : `${playerName}'s Field (click to target)`,
+  );
 </script>
 
 <div class="flex flex-col gap-2">
@@ -34,10 +43,10 @@
         class="underline decoration-dashed underline-offset-2 hover:text-blue-600"
         onclick={onSelectAsTarget}
       >
-        {playerName}'s Field (click to target)
+        {targetFieldLabel}
       </button>
     {:else}
-      {playerName}'s Field
+      {fieldLabel}
     {/if}
   </h3>
   <div class="flex gap-3 flex-wrap min-h-24">

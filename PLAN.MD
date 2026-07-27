@@ -42,7 +42,7 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - [x] **Deck & Setup** ([src/lib/game/deck.ts](src/lib/game/deck.ts)): Creation and shuffling logic.
 - [x] **Sheep Logic** ([src/lib/game/sheep.ts](src/lib/game/sheep.ts)): Validity, modifiers, value calculation.
 - [x] **Action Cards** ([src/lib/game/actions.ts](src/lib/game/actions.ts)): Handlers for Yoink, Wheat, Wolf, and Franken checks.
-- [x] **ITSLAM! Mechanic** ([src/lib/game/itslam.ts](src/lib/game/itslam.ts)): Full coin-flip lifecycle and effect handlers (Lure/Remove/Yoink/etc).
+- [x] **ITSLAM? Mechanic** ([src/lib/game/itslam.ts](src/lib/game/itslam.ts)): Full coin-flip lifecycle and effect handlers (Lure/Remove/Yoink/etc).
 - [x] **Scoring & Lifecycle** ([src/lib/game/scoring.ts](src/lib/game/scoring.ts)): Game over checks, winner calculation, and final-round handoff timing.
 - [x] **Orchestrator** ([src/lib/gameStore.svelte.ts](src/lib/gameStore.svelte.ts)): Svelte `$state` management and public API surface.
 
@@ -91,13 +91,6 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Status**: todo, in-progress, blocked, done
 
 ### Issue Cards
-
-#### UI-005 - Grammar fix
-
-- **Area**: ux
-- **Severity**: low
-- **Status**: todo
-- **Problem**: "You's Field" is wrong and should be "Your Field"
 
 #### UI-006 - Player representation
 
@@ -235,3 +228,10 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Severity**: low
 - **Status**: done
 - **Problem**: each sheep should be better segregated with some clear border for each sheep
+
+#### UI-005 - Grammar fix
+
+- **Area**: ux
+- **Severity**: low
+- **Status**: done
+- **Problem**: "You's Field" is wrong and should be "Your Field"
