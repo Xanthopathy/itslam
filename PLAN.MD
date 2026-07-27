@@ -92,13 +92,6 @@ This section tracks execution issues without changing the main phase roadmap abo
 
 ### Issue Cards
 
-#### UI-006 - Player representation
-
-- **Area**: visuals
-- **Severity**: medium
-- **Status**: todo
-- **Problem**: better player representation (icon, 4-quadrant splitting with each player having their hand size shown)
-
 #### UI-007 - ITSLAM resolution
 
 - **Area**: visuals
@@ -235,3 +228,10 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Severity**: low
 - **Status**: done
 - **Problem**: "You's Field" is wrong and should be "Your Field"
+
+#### UI-006 - Player representation
+
+- **Area**: visuals
+- **Severity**: medium
+- **Status**: done
+- **Problem**: better player representation (icon, 4-quadrant splitting with each player having their hand size shown)

@@ -6,25 +6,29 @@
   type Props = {
     playerName: string;
     field: Sheep[];
-    // Whole-sheep targeting (Wolf, Wheat, ITSLAM effects). Mutually
-    // exclusive with onPartClick - GameBoard sets only one at a time
-    // depending on what's currently being resolved.
+    handSize?: number;
+    isActive?: boolean;
+    isLocalPlayer?: boolean;
+    // Whole-sheep targeting (Wolf, Wheat, ITSLAM effects). Mutually exclusive with onPartClick - GameBoard sets only one at a time depending on what's currently being resolved.
     onSheepClick?: (sheepIndex: number) => void;
     // Single-part targeting (swapSheepPart's targetPartIndex)
     onPartClick?: (sheepIndex: number, partIndex: 0 | 1) => void;
-    // Player-level targeting (Yoink, most ITSLAM cards) - clicking the
-    // player's name/header rather than any specific sheep.
+    // Player-level targeting (Yoink, most ITSLAM cards) - clicking the player's name/header rather than any specific sheep.
     onSelectAsTarget?: () => void;
   };
 
   let {
     playerName,
     field,
+    handSize = 0,
+    isActive = false,
+    isLocalPlayer = false,
     onSheepClick,
     onPartClick,
     onSelectAsTarget,
   }: Props = $props();
 
+  const displayName = $derived(playerName === "You" ? "You" : playerName);
   const fieldLabel = $derived(
     playerName === "You" ? "Your Field" : `${playerName}'s Field`,
   );
@@ -33,22 +37,53 @@
       ? "Your Field (click to target)"
       : `${playerName}'s Field (click to target)`,
   );
+  const avatar = $derived(isLocalPlayer ? "🧑" : "🐑");
 </script>
 
-<div class="flex flex-col gap-2">
-  <h3 class="text-sm font-semibold text-gray-700">
-    {#if onSelectAsTarget}
-      <button
-        type="button"
-        class="underline decoration-dashed underline-offset-2 hover:text-blue-600"
-        onclick={onSelectAsTarget}
+<div
+  class="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white/90 p-3 shadow-sm"
+>
+  <div class="flex items-center justify-between gap-2">
+    <div class="flex items-center gap-2">
+      <div
+        class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-lg"
       >
-        {targetFieldLabel}
-      </button>
-    {:else}
-      {fieldLabel}
-    {/if}
-  </h3>
+        {avatar}
+      </div>
+      <div class="min-w-0">
+        {#if onSelectAsTarget}
+          <button
+            type="button"
+            class="text-left text-sm font-semibold text-gray-800 underline decoration-dashed underline-offset-2 hover:text-blue-600"
+            onclick={onSelectAsTarget}
+          >
+            {targetFieldLabel}
+          </button>
+        {:else}
+          <div class="text-sm font-semibold text-gray-800">{displayName}</div>
+        {/if}
+        <div class="text-xs text-gray-500">
+          {isLocalPlayer ? "Local player" : "Opponent"}
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span
+        class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
+      >
+        Hand {handSize}
+      </span>
+      {#if isActive}
+        <span
+          class="rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white"
+        >
+          Turn
+        </span>
+      {/if}
+    </div>
+  </div>
+
   <div class="flex gap-3 flex-wrap min-h-24">
     {#each field as sheep, index (index)}
       <div class="rounded-2xl border-4 border-gray-700 bg-gray-500 shadow-sm">

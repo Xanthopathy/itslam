@@ -10,8 +10,7 @@
 
   type Props = {
     localPlayerId: string;
-    // Undefined only very briefly - root page only mounts GameBoard once
-    // roomCode is known, so this should always be set in practice.
+    // Undefined only very briefly - root page only mounts GameBoard once roomCode is known, so this should always be set in practice.
     dispatcher: Dispatcher | undefined;
   };
 
@@ -31,9 +30,7 @@
   };
   let pendingPlay: PendingPlay | null = $state(null);
 
-  // Set to true only when the player has clicked "End Turn" with a hand
-  // over 7 - not just whenever hand.length > 7, since they're free to keep
-  // playing cards during the turn instead of discarding right away.
+  // Set to true only when the player has clicked "End Turn" with a hand over 7 - not just whenever hand.length > 7, since they're free to keep playing cards during the turn instead of discarding right away.
   let awaitingDiscard = $state(false);
 
   function attemptEndTurn() {
@@ -79,8 +76,7 @@
     const card = localPlayer.hand.find((c) => c.id === cardIds[0]);
     if (!card) return;
 
-    // ReFlip: gameStore special-cases this by name before checking type -
-    // it never needs a target, and can be played off-turn during grace period.
+    // ReFlip: gameStore special-cases this by name before checking type - it never needs a target, and can be played off-turn during grace period.
     if (card.name === "ReFlip") {
       gameEngine.playCards(localPlayerId, cardIds);
       dispatcher?.publish({
@@ -99,8 +95,7 @@
         mode: card.name === "Yoink" ? "player-target" : "sheep-target",
       };
     } else if (card.type === "itslam") {
-      // playItslamCard rejects any card other than "Recover 1 Sheep"
-      // without a targetPlayer - so only Recover skips the target step.
+      // playItslamCard rejects any card other than "Recover 1 Sheep" without a targetPlayer - so only Recover skips the target step.
       if (card.name === "Recover 1 Sheep") {
         gameEngine.playCards(localPlayerId, cardIds);
         dispatcher?.publish({
@@ -232,11 +227,14 @@
     {/if}
 
     <!-- all player fields, including your own -->
-    <div class="flex flex-col gap-4">
+    <div class="grid gap-4 md:grid-cols-2">
       {#each gameState.players as player (player.id)}
         <PlayerField
           playerName={player.id === localPlayerId ? "You" : player.name}
           field={player.field}
+          handSize={player.hand.length}
+          isActive={gameState.currentTurnPlayerId === player.id}
+          isLocalPlayer={player.id === localPlayerId}
           onSelectAsTarget={pendingPlay?.mode === "player-target"
             ? () => handlePlayerTarget(player.id)
             : undefined}
