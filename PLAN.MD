@@ -79,6 +79,7 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - Import convention: relative imports (`./`, `../`) within `src/lib`; use `$lib/...` only from outside `src/lib` (components/routes).
 - `types.ts` and `gamestore.svelte.ts` intentionally stay at `src/lib/` (not under `game/`) — they're the public surface; `game/*` is internal, only imported by `gamestore.svelte.ts`.
 - Author has limited familiarity with the codebase/TypeScript generally — prefer explaining _why_, not just handing over code, and flag design decisions rather than assuming silently.
+- We're using Svelte 5.
 
 ## Issue Backlog
 
@@ -104,7 +105,7 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Area**: polish
 - **Severity**: low
 - **Status**: todo
-- **Problem**: card animation: moving across the board, moving between player hands, moving between draw and discard piles
+- **Problem**: card animation: moving across the board, moving between player hands, moving between draw and discard piles (make a real draw & discard pile visual too)
 
 #### POLISH-001 - Graphics museum
 
@@ -120,9 +121,10 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Status**: todo
 - **Problem**:
   - ITSLAM card play is not announced in the game log.
-  - The game can freeze at the third flip screen.
+  - The game can freeze at a reflip screen.
   - ReFlip sometimes does not work even when a ReFlip card is in hand (possibly because a won result cannot be re-flipped).
   - ReFlip result wording is vague and does not handle player-specific broadcast state.
+  - ITSLAM grace-period soft locks are likely caused by a race between the local countdown/finalization timer and the shared ReFlip state transition. The current implementation uses multiple independent timers plus optimistic local state, so a ReFlip played close to the end of the grace window can leave clients in a mismatched phase. The fix should make the host the authoritative state transition point and have the UI follow that shared state rather than maintain its own separate timer logic.
 
 ### Completed Log
 
