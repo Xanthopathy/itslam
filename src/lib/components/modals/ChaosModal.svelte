@@ -178,21 +178,27 @@
     tick();
     const interval = setInterval(tick, 250);
 
-    const finalizeTimer = isHost
-      ? setTimeout(
-          () => {
+    // Poll for finalization: check every 250ms so we don't miss the window.
+    // Also guards against double-fire by only acting when phase is still grace_period.
+    let finalized = false;
+    const finalizePoll = isHost
+      ? setInterval(() => {
+          if (finalized) return;
+          if (Date.now() >= endsAt + 1000) {
+            finalized = true;
+            clearInterval(finalizePoll);
+            clearInterval(interval);
             dispatcher?.publish({
               type: "FINALIZE_COIN_FLIP",
               payload: {},
             });
-          },
-          Math.max(0, endsAt - Date.now()),
-        )
+          }
+        }, 250)
       : undefined;
 
     return () => {
       clearInterval(interval);
-      if (finalizeTimer) clearTimeout(finalizeTimer);
+      if (finalizePoll) clearInterval(finalizePoll);
     };
   });
 
@@ -273,13 +279,13 @@
         <p class="text-sm text-center text-gray-600">
           The sheep is <strong
             >{flip.result === "looking" ? "looking" : "not looking"}</strong
-          > at you
+          >
         </p>
 
         <p class="text-sm text-center font-medium text-slate-700">
           {flip.prediction === flip.result
-            ? `${challenger?.name ?? "The challenger"} benefits if the prediction matches the flip.`
-            : `${defender?.name ?? "The defender"} benefits if the prediction misses the flip.`}
+            ? `${challenger?.name ?? "Challenger"} predicted correctly — they will win the flip.`
+            : `${defender?.name ?? "Defender"} benefits — the prediction missed.`}
         </p>
 
         <p class="text-xs text-gray-500">
@@ -296,13 +302,21 @@
         </button>
       {:else if effectivePhase === "resolved"}
         {#if !isWinner}
-          <p class="text-sm text-center text-gray-600">
-            No one won the flip, so the effect is skipped.
-          </p>
-          <p class="text-xs text-center text-slate-600">
-            The coin flip resolved without a winner, so this ITSLAM card closes
-            without applying an effect.
-          </p>
+          {#if winnerPlayer}
+            <p class="text-sm text-center text-gray-600">
+              {winnerPlayer.name} won the flip and is resolving the effect...
+            </p>
+            <p class="text-xs text-center text-slate-600">
+              Waiting for {winnerPlayer.name} to choose targets and resolve the effect.
+            </p>
+          {:else}
+            <p class="text-sm text-center text-gray-600">
+              No one can win the flip — the effect is skipped.
+            </p>
+            <p class="text-xs text-center text-slate-600">
+              The prediction had no valid target, so this ITSLAM card closes.
+            </p>
+          {/if}
         {:else}
           <p class="text-sm text-center text-gray-600">
             You won! Resolving: {flip.cardName}

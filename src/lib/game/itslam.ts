@@ -19,6 +19,7 @@ import {
 
 // ========== INTERACTION FLOW ==========
 
+const COIN_FLIP_GRACE_DURATION_MS = 5000;
 const COIN_FLIP_GRACE_BUFFER_MS = 1000;
 
 export function getEffectiveCoinFlipPhase(
@@ -136,7 +137,7 @@ export function submitFlipResult(
   if (!flip || flip.phase !== "flipping") return false;
 
   flip.result = result;
-  flip.graceDeadlineAt = Date.now() + 5000;
+  flip.graceDeadlineAt = Date.now() + COIN_FLIP_GRACE_DURATION_MS;
   flip.phase = "grace_period";
 
   return true;
