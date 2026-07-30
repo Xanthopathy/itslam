@@ -69,7 +69,7 @@ export type CoinFlipState = {
   prediction?: "looking" | "not_looking"; // cleared on re-flip, set at step 2
   result?: "looking" | "not_looking"; // set at step 3, cleared on re-flip
   winnerId?: string; // set at step 6
-  graceWindowEndsAt?: number; // timestamp, set at step 3/4, used by step 4's window
+  graceDeadlineAt?: number; // authoritative shared deadline used by the UI and host finalization
   reFlipCount: number; // increments each time step 5 triggers, replaces reFlipUsed
 };
 

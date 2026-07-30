@@ -93,13 +93,6 @@ This section tracks execution issues without changing the main phase roadmap abo
 
 ### Issue Cards
 
-#### UI-007 - ITSLAM resolution
-
-- **Area**: visuals
-- **Severity**: high
-- **Status**: todo
-- **Problem**: grace period card currently doesn't resolve properly if the initial player fails (losing recover 1 sheep guess or having to take things [so the confirm button should work regardless of how many things the player picked from 0 to 2]), can result in a softlock where the "Anyone can play ReFlip in the next 0s..." card stays indefinitely and the player can't end their turn (possibly add an X button to close/minimize)
-
 #### VIS-001 - Card movement animations
 
 - **Area**: polish
@@ -114,11 +107,20 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Status**: todo
 - **Problem**: Make a museum for reviewing graphics
 
-### LOGIC-003 - Reflip
+### Completed Log
+
+#### UI-007 - ITSLAM resolution
+
+- **Area**: visuals
+- **Severity**: high
+- **Status**: done
+- **Problem**: grace period card currently doesn't resolve properly if the initial player fails (losing recover 1 sheep guess or having to take things [so the confirm button should work regardless of how many things the player picked from 0 to 2]), can result in a softlock where the "Anyone can play ReFlip in the next 0s..." card stays indefinitely and the player can't end their turn (possibly add an X button to close/minimize)
+
+#### LOGIC-003 - Reflip
 
 - **Area**: ux
 - **Severity**: high
-- **Status**: todo
+- **Status**: done
 - **Problem**:
   - ITSLAM card play is not announced in the game log.
   - The game can freeze at a reflip screen.
@@ -126,7 +128,6 @@ This section tracks execution issues without changing the main phase roadmap abo
   - ReFlip result wording is vague and does not handle player-specific broadcast state.
   - ITSLAM grace-period soft locks are likely caused by a race between the local countdown/finalization timer and the shared ReFlip state transition. The current implementation uses multiple independent timers plus optimistic local state, so a ReFlip played close to the end of the grace window can leave clients in a mismatched phase. The fix should make the host the authoritative state transition point and have the UI follow that shared state rather than maintain its own separate timer logic.
 
-### Completed Log
 
 #### LOGIC-002 - Card not found after play
 

@@ -176,8 +176,8 @@
   let secondsLeft = $state(0);
 
   $effect(() => {
-    if (flip?.phase !== "grace_period" || !flip.graceWindowEndsAt) return;
-    const endsAt = flip.graceWindowEndsAt;
+    if (flip?.phase !== "grace_period" || !flip.graceDeadlineAt) return;
+    const endsAt = flip.graceDeadlineAt;
 
     const tick = () => {
       secondsLeft = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));

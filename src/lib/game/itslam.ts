@@ -60,14 +60,13 @@ export function playReFlipCard(state: GameState, playerId: string): boolean {
   const flip = state.activeCoinFlip;
   if (!flip || flip.phase !== "grace_period") return false;
 
-  const graceDeadline =
-    (flip.graceWindowEndsAt ?? Date.now()) + COIN_FLIP_GRACE_BUFFER_MS;
-  if (Date.now() > graceDeadline) return false;
+  const graceDeadline = flip.graceDeadlineAt ?? Date.now();
+  if (Date.now() > graceDeadline + COIN_FLIP_GRACE_BUFFER_MS) return false;
 
   flip.prediction = undefined;
   flip.result = undefined;
   flip.winnerId = undefined;
-  flip.graceWindowEndsAt = undefined;
+  flip.graceDeadlineAt = undefined;
   flip.reFlipCount += 1;
   flip.phase = "awaiting_prediction";
 
@@ -118,7 +117,7 @@ export function submitFlipResult(
   if (!flip || flip.phase !== "flipping") return false;
 
   flip.result = result;
-  flip.graceWindowEndsAt = Date.now() + 5000; // 5 seconds grace period
+  flip.graceDeadlineAt = Date.now() + 5000;
   flip.phase = "grace_period";
 
   return true;
@@ -134,9 +133,8 @@ export function finalizeCoinFlip(
   const flip = state.activeCoinFlip;
   if (!flip || flip.phase !== "grace_period") return;
 
-  if (flip.graceWindowEndsAt === undefined) return;
-  const finalizeDeadline = flip.graceWindowEndsAt + bufferMs;
-  if (Date.now() < finalizeDeadline) return;
+  if (flip.graceDeadlineAt === undefined) return;
+  if (Date.now() < flip.graceDeadlineAt + bufferMs) return;
 
   const winner = determineFlipWinner(flip);
   flip.winnerId = winner;
