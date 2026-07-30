@@ -1,12 +1,14 @@
 <script lang="ts">
   // src/lib/components/modals/GameOverModal.svelte
   import { gameEngine } from "../../gameStore.svelte";
+  import type { Dispatcher } from "../../network/dispatcher";
 
   type Props = {
     localPlayerId: string;
+    dispatcher?: Dispatcher;
   };
 
-  let { localPlayerId }: Props = $props();
+  let { localPlayerId, dispatcher }: Props = $props();
 
   const gameState = gameEngine.state;
 
@@ -34,11 +36,18 @@
     return player.id === localPlayerId ? `${player.name} (You)` : player.name;
   }
 
-  function playAgain() {
-    // Re-init with the same players, same seats, fresh deck/hands
+  async function playAgain() {
+    if (!isHost) return;
+
+    // Re-init with the same players, same seats, fresh deck/hands.
     gameEngine.InitGame(
       gameState.players.map((p) => ({ id: p.id, name: p.name })),
     );
+
+    await dispatcher?.publish({
+      type: "SYNC_STATE",
+      payload: { state: $state.snapshot(gameEngine.state) },
+    });
   }
 </script>
 

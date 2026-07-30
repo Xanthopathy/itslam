@@ -324,7 +324,7 @@
       </div>
     {/if}
 
-    <GameOverModal {localPlayerId} />
+    <GameOverModal {localPlayerId} {dispatcher} />
   </div>
 {:else if gameState.status === "lobby"}
   <p class="text-center text-gray-500 p-8">Waiting for the game to start...</p>
