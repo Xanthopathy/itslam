@@ -1,5 +1,5 @@
 // src/lib/game/itslam.ts
-import type { Card, CoinFlipState, GameState, Player, Sheep } from "../types";
+import type { Card, CoinFlipState, GameState, ItslamPhase, Player, Sheep } from "../types";
 import { describeSheep, isValidSheep } from "./sheep";
 import {
   addCardToHand,
@@ -13,6 +13,16 @@ import {
 // ========== INTERACTION FLOW ==========
 
 const COIN_FLIP_GRACE_BUFFER_MS = 1000;
+
+export function getEffectiveCoinFlipPhase(flip: CoinFlipState | undefined): ItslamPhase | undefined {
+  if (!flip) return undefined;
+
+  if (flip.phase === "grace_period" && !flip.prediction && !flip.result) {
+    return "awaiting_prediction";
+  }
+
+  return flip.phase;
+}
 
 /**
  * Play ITSLAM card with coin-flip mechanics:

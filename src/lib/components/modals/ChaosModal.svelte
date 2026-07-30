@@ -1,6 +1,7 @@
 <script lang="ts">
   // src/lib/components/modals/ChaosModal.svelte
   import { gameEngine } from "../../gameStore.svelte";
+  import { getEffectiveCoinFlipPhase } from "../../game/itslam";
   import CardComponent from "../cards/Card.svelte";
   import SheepComponent from "../cards/Sheep.svelte";
   import type { Dispatcher } from "../../network/dispatcher";
@@ -14,6 +15,7 @@
 
   const gameState = gameEngine.state;
   const flip = $derived(gameState.activeCoinFlip);
+  const effectivePhase = $derived(getEffectiveCoinFlipPhase(flip));
 
   const isChallenger = $derived(flip?.challengerId === localPlayerId);
   const isDefender = $derived(flip?.defenderId === localPlayerId);
@@ -151,6 +153,15 @@
   }
 
   const isHost = $derived(localPlayerId === gameState.hostId);
+  const challenger = $derived(
+    gameState.players.find((p) => p.id === flip?.challengerId),
+  );
+  const defender = $derived(
+    gameState.players.find((p) => p.id === flip?.defenderId),
+  );
+  const winnerPlayer = $derived(
+    gameState.players.find((p) => p.id === flip?.winnerId),
+  );
 
   // Only the host generates + submits the result, and only after a fixed
   // delay - so the "reveal" is what gets synced to other clients, not the
@@ -158,7 +169,7 @@
   // every client's flip animation runs for roughly the same visible
   // duration regardless of when their own state update actually lands.
   $effect(() => {
-    if (flip?.phase !== "flipping" || !isHost) return;
+    if (effectivePhase !== "flipping" || !isHost) return;
 
     const timer = setTimeout(() => {
       const result = gameEngine.generateFlipResult();
@@ -176,7 +187,8 @@
   let secondsLeft = $state(0);
 
   $effect(() => {
-    if (flip?.phase !== "grace_period" || !flip.graceDeadlineAt) return;
+    if (!flip || effectivePhase !== "grace_period" || !flip.graceDeadlineAt)
+      return;
     const endsAt = flip.graceDeadlineAt;
 
     const tick = () => {
@@ -213,7 +225,20 @@
     <div class="bg-white rounded-xl p-6 w-80 flex flex-col gap-4 items-center">
       <h2 class="text-lg font-bold">{flip.cardName}</h2>
 
-      {#if flip.phase === "awaiting_prediction"}
+      <div
+        class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm text-slate-700"
+      >
+        <p class="font-semibold text-slate-800">
+          {challenger?.name ?? "Someone"} vs {defender?.name ?? "someone"}
+        </p>
+        <p class="mt-1 text-xs text-slate-600">
+          {isChallenger
+            ? `You played this ITSLAM card against ${defender?.name ?? "the target"}.`
+            : `${challenger?.name ?? "The challenger"} played this ITSLAM card against you.`}
+        </p>
+      </div>
+
+      {#if effectivePhase === "awaiting_prediction"}
         {#if isChallenger}
           <p class="text-sm text-gray-600">Is that sheep looking at you?</p>
           <div class="flex gap-3">
@@ -234,21 +259,34 @@
           </div>
         {:else}
           <p class="text-sm text-gray-600">
-            Waiting for the challenger to make a prediction...
+            {flip.reFlipCount > 0
+              ? `${challenger?.name ?? "The challenger"} is making a fresh prediction after a ReFlip.`
+              : `Waiting for ${challenger?.name ?? "the challenger"} to make a prediction...`}
+          </p>
+          <p class="text-xs text-slate-500">
+            {flip.reFlipCount > 0
+              ? `The coin flip was reset and ${challenger?.name ?? "the challenger"} must predict again.`
+              : `The result will be revealed after ${challenger?.name ?? "the challenger"} locks in their prediction.`}
           </p>
         {/if}
-      {:else if flip.phase === "flipping"}
+      {:else if effectivePhase === "flipping"}
         <div class="text-5xl animate-spin">🟡</div>
         <p class="text-sm text-gray-600">Flipping the coin...</p>
-      {:else if flip.phase === "grace_period"}
+      {:else if effectivePhase === "grace_period"}
         <div class="text-5xl">
-          {flip.result === "looking" ? "[heat]" : "[butt]"}
+          {flip.result === "looking" ? "🐑" : "🍑"}
         </div>
 
         <p class="text-sm text-gray-600">
           The sheep is <strong
             >{flip.result === "looking" ? "looking" : "not looking"}</strong
           > at you
+        </p>
+
+        <p class="text-sm font-medium text-slate-700">
+          {flip.prediction === flip.result
+            ? `${challenger?.name ?? "The challenger"} benefits if the prediction matches the flip.`
+            : `${defender?.name ?? "The defender"} benefits if the prediction misses the flip.`}
         </p>
 
         <p class="text-xs text-gray-500">
@@ -263,15 +301,24 @@
         >
           Play ReFlip
         </button>
-      {:else if flip.phase === "resolved"}
+      {:else if effectivePhase === "resolved"}
         {#if !isWinner}
           <p class="text-sm text-gray-600">
-            {gameState.players.find((p) => p.id === flip.winnerId)?.name ??
-              "No one"} won the flip and is resolving the effect...
+            {winnerPlayer?.name ?? "No one"} won the flip and is resolving the effect...
+          </p>
+          <p class="text-xs text-slate-600">
+            The winner is {winnerPlayer?.name ?? "no one"}, so {winnerPlayer?.name ===
+            localPlayerId
+              ? "you"
+              : (winnerPlayer?.name ?? "the winner")} gets the effect.
           </p>
         {:else}
           <p class="text-sm text-gray-600">
             You won! Resolving: {flip.cardName}
+          </p>
+          <p class="text-xs text-slate-600 text-center">
+            The flip result benefited you, so you resolve the effect against {defender?.name ??
+              "the target"}.
           </p>
 
           {#if flip.cardName === "Yoink Entire Hand"}

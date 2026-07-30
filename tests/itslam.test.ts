@@ -1,6 +1,10 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { playReFlipCard, resolveItslamEffect } from "../src/lib/game/itslam.ts";
+import {
+  getEffectiveCoinFlipPhase,
+  playReFlipCard,
+  resolveItslamEffect,
+} from "../src/lib/game/itslam.ts";
 import { playActionCard } from "../src/lib/game/actions.ts";
 import type { GameState, Card } from "../src/lib/types.ts";
 
@@ -71,6 +75,24 @@ describe("ITSLAM resolution", () => {
 
     assert.equal(success, true);
     assert.equal(state.activeCoinFlip?.phase, "awaiting_prediction");
+  });
+
+  it("treats a re-flipped grace-period state as awaiting prediction for the UI", () => {
+    const state = createState();
+    state.activeCoinFlip = {
+      challengerId: "p1",
+      defenderId: "p2",
+      cardId: "flip-3",
+      cardName: "Lure 2 Sheep",
+      phase: "grace_period",
+      prediction: undefined,
+      result: undefined,
+      reFlipCount: 1,
+    };
+
+    const phase = getEffectiveCoinFlipPhase(state.activeCoinFlip);
+
+    assert.equal(phase, "awaiting_prediction");
   });
 
   it("allows Yoink to steal cards from the target hand when no indices are supplied", () => {
