@@ -26,7 +26,6 @@ export function playActionCard(
   let success = false;
   switch (card.name) {
     case "Yoink":
-      if (!chosenIndices) return false;
       success = handleYoink(state, player, targetPlayer, chosenIndices);
       break;
     case "Wheat":
@@ -57,16 +56,26 @@ export function handleYoink(
   state: GameState,
   player: Player,
   targetPlayer: Player,
-  chosenIndices: number[],
+  chosenIndices?: number[],
 ): boolean {
-  const expectedCount = Math.min(2, targetPlayer.hand.length);
-  if (chosenIndices.length !== expectedCount) return false;
+  if (targetPlayer.hand.length === 0) {
+    return false;
+  }
 
-  if (!validateUniqueIndices(targetPlayer.hand.length, chosenIndices))
+  const expectedCount = Math.min(2, targetPlayer.hand.length);
+
+  const resolvedIndices =
+    chosenIndices === undefined
+      ? Array.from({ length: expectedCount }, (_, index) => index)
+      : chosenIndices;
+
+  if (resolvedIndices.length !== expectedCount) return false;
+
+  if (!validateUniqueIndices(targetPlayer.hand.length, resolvedIndices))
     return false;
 
   // Snapshot cards in oldest -> newest order before removing anything.
-  const cardsToSteal = [...chosenIndices]
+  const cardsToSteal = [...resolvedIndices]
     .sort((a, b) => a - b)
     .map((idx) => targetPlayer.hand[idx]);
 

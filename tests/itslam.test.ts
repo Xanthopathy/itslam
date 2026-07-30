@@ -1,7 +1,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { playReFlipCard, resolveItslamEffect } from "../src/lib/game/itslam.ts";
-import type { GameState } from "../src/lib/types.ts";
+import { playActionCard } from "../src/lib/game/actions.ts";
+import type { GameState, Card } from "../src/lib/types.ts";
 
 function createState(): GameState {
   return {
@@ -70,5 +71,22 @@ describe("ITSLAM resolution", () => {
 
     assert.equal(success, true);
     assert.equal(state.activeCoinFlip?.phase, "awaiting_prediction");
+  });
+
+  it("allows Yoink to steal cards from the target hand when no indices are supplied", () => {
+    const state = createState();
+    const yoinkCard: Card = { id: "yoink-1", name: "Yoink", type: "action" };
+    const targetHandCardA: Card = { id: "card-a", name: "Card A", type: "head" };
+    const targetHandCardB: Card = { id: "card-b", name: "Card B", type: "butt" };
+
+    state.players[0].hand = [yoinkCard];
+    state.players[1].hand = [targetHandCardA, targetHandCardB];
+
+    const success = playActionCard(state, state.players[0], yoinkCard, state.players[1]);
+
+    assert.equal(success, true);
+    assert.equal(state.players[0].hand.length, 3);
+    assert.equal(state.players[1].hand.length, 0);
+    assert.deepEqual(state.players[0].hand.slice(1).map((card) => card.id), ["card-a", "card-b"]);
   });
 });
