@@ -164,12 +164,18 @@ export function resolveItslamEffect(
   // validating the coin flip state and winner
   const flip = state.activeCoinFlip;
   if (!flip || flip.phase !== "resolved") return false;
-  if (playerId !== flip.winnerId) return false;
+
+  const winnerId = flip.winnerId;
+  if (!winnerId) {
+    state.activeCoinFlip = undefined;
+    return true;
+  }
+  if (playerId !== winnerId) return false;
 
   // validating the winner and loser players
-  const winner = findPlayerById(state, flip.winnerId);
+  const winner = findPlayerById(state, winnerId);
   const loserId = flip.defenderId
-    ? flip.winnerId === flip.challengerId
+    ? winnerId === flip.challengerId
       ? flip.defenderId
       : flip.challengerId
     : undefined;
