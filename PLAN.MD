@@ -93,12 +93,89 @@ This section tracks execution issues without changing the main phase roadmap abo
 
 ### Issue Cards
 
-#### VIS-001 - Card movement animations
+#### UI-008 - Action feedback & gameboard polish
 
-- **Area**: polish
-- **Severity**: low
+- **Area**: visuals
+- **Severity**: high
+- **Status**: todo
+- **Problem**: The current gameboard feels bland and boring, with minimal visual feedback for actions and state changes. We need richer UI decoration and clearer on-screen feedback for successful/failed card plays, turn changes, targeting, and important game events so the experience feels more enticing and alive.
+
+#### UI-009 - Card movement animations
+
+- **Area**: visuals
+- **Severity**: high
 - **Status**: todo
 - **Problem**: card animation: moving across the board, moving between player hands, moving between draw and discard piles (make a real draw & discard pile visual too)
+
+#### Debug Note - Room state inspection
+
+- Add a development/debug helper for inspecting the current room snapshot from local storage:
+
+```ts
+const roomCode = new URLSearchParams(window.location.search).get("room");
+const raw = localStorage.getItem(`itslam_game_state:${roomCode}`);
+if (!raw) {
+  console.log("No saved state found for this room.");
+} else {
+  const parsed = JSON.parse(raw);
+  console.log(JSON.stringify(parsed, null, 2));
+}
+```
+
+#### Implementation Plan: UI-008 + UI-009
+
+This is the big visual refresh pass for the gameboard and card interactions. The goal is to make the experience feel less like a prototype and more like a polished, lively tabletop game while keeping the underlying rules and networking unchanged.
+
+##### Phase 1 - Foundation polish
+
+- Establish a shared visual language for the board: spacing, card sizing, elevation, borders, shadows, and button states.
+- Add a stronger header/board shell with clearer turn, round, and player status information.
+- Refine the base card component so it can support hover, selection, invalid-target, and active-turn states without needing per-screen hacks.
+- Create a small set of reusable UI tokens for success, warning, error, and info feedback.
+
+##### Phase 2 - Action feedback layer
+
+- Add visible feedback for common actions: card played, target selected, turn passed, invalid action, successful effect resolution, and game-over transitions.
+- Introduce lightweight toast/banner messages and inline status chips for the most important moments.
+- Make the currently active player and the current action target visually obvious, especially during ITSLAM, ReFlip, and card-targeting sequences.
+- Ensure failed actions are not silent; they should clearly explain why the play was rejected.
+- Allow players to select an entire player quadrant as a target, with a colored overlay preview when hovering over that quadrant during selection.
+
+##### Phase 3 - Gameboard visual overhaul
+
+- Rework the main board into a more structured, readable layout with clearer player zones, hand grouping, and field grouping.
+- Give each player area a stronger identity with name, status, hand size, score, and turn indicator.
+- Improve the field display with better separation between sheep, clearer card grouping, and consistent spacing.
+- Add a proper draw pile/discard pile visual so card flow feels tangible instead of abstract.
+- Improve modal presentation for ITSLAM, game over, and other important state changes.
+
+##### Phase 4 - Motion and transitions
+
+- Add subtle motion for card plays, hand changes, and pile transitions.
+- Animate card movement between hand, field, draw pile, and discard pile.
+- Introduce short, tasteful transitions for selection states, turn changes, and important feedback banners.
+- Keep animations lightweight and deterministic so they do not feel flashy or distracting.
+
+##### Phase 5 - Interaction polish and QA
+
+- Review the board for clarity on mobile and desktop sizes.
+- Ensure all feedback states work during multiplayer latency and during late-join/sync flows.
+- Tune the visual hierarchy so the important gameplay state is always obvious without overwhelming the player.
+- Validate the full flow from lobby → game start → turn play → ITSLAM/ReFlip → game over.
+
+##### Expected outcome
+
+- The game feels more alive, readable, and rewarding to play.
+- Players receive immediate visual confirmation for what happened and why.
+- The board reads as a polished game experience rather than a barebones prototype.
+
+##### Suggested implementation order
+
+1. Shared visual tokens and base component states.
+2. Toast/banner feedback system and action-state highlighting.
+3. Player board layout and field/pile visual upgrades.
+4. Modal and game log polish.
+5. Card movement animations and transition tuning.
 
 #### POLISH-001 - Graphics museum
 
@@ -127,7 +204,6 @@ This section tracks execution issues without changing the main phase roadmap abo
   - ReFlip sometimes does not work even when a ReFlip card is in hand (possibly because a won result cannot be re-flipped).
   - ReFlip result wording is vague and does not handle player-specific broadcast state.
   - ITSLAM grace-period soft locks are likely caused by a race between the local countdown/finalization timer and the shared ReFlip state transition. The current implementation uses multiple independent timers plus optimistic local state, so a ReFlip played close to the end of the grace window can leave clients in a mismatched phase. The fix should make the host the authoritative state transition point and have the UI follow that shared state rather than maintain its own separate timer logic.
-
 
 #### LOGIC-002 - Card not found after play
 
