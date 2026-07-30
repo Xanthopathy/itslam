@@ -17,6 +17,33 @@ const LOCALLY_APPLIED_ACTIONS = new Set<RoomAction["type"]>([
   "FINALIZE_COIN_FLIP",
   "RESOLVE_ITSLAM",
 ]);
+const RETAINED_STATE_DEBOUNCE_MS = 250;
+
+export function createRetainedStateScheduler(
+  schedulePublish: () => void,
+  delayMs = RETAINED_STATE_DEBOUNCE_MS,
+) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  return {
+    request() {
+      if (timer) {
+        clearTimeout(timer);
+      }
+
+      timer = setTimeout(() => {
+        timer = undefined;
+        schedulePublish();
+      }, delayMs);
+    },
+    cancel() {
+      if (timer) {
+        clearTimeout(timer);
+        timer = undefined;
+      }
+    },
+  };
+}
 
 export type Dispatcher = {
   publish: (action: RoomAction) => Promise<void>;
@@ -44,6 +71,10 @@ export function createDispatcher(
     }
   }
 
+  const retainedStateScheduler = createRetainedStateScheduler(() => {
+    void awaitSyncState();
+  });
+
   async function awaitSyncState(): Promise<void> {
     await networkClient.publishToRoom({
       type: "SYNC_STATE",
@@ -56,7 +87,7 @@ export function createDispatcher(
 
   function publishRetainedStateIfHost(): void {
     if (isHost() && gameEngine.state.status !== "lobby") {
-      void awaitSyncState();
+      retainedStateScheduler.request();
     }
   }
 
