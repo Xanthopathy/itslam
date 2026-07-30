@@ -1,5 +1,12 @@
 // src/lib/game/itslam.ts
-import type { Card, CoinFlipState, GameState, ItslamPhase, Player, Sheep } from "../types";
+import type {
+  Card,
+  CoinFlipState,
+  GameState,
+  ItslamPhase,
+  Player,
+  Sheep,
+} from "../types";
 import { describeSheep, isValidSheep } from "./sheep";
 import {
   addCardToHand,
@@ -14,7 +21,9 @@ import {
 
 const COIN_FLIP_GRACE_BUFFER_MS = 1000;
 
-export function getEffectiveCoinFlipPhase(flip: CoinFlipState | undefined): ItslamPhase | undefined {
+export function getEffectiveCoinFlipPhase(
+  flip: CoinFlipState | undefined,
+): ItslamPhase | undefined {
   if (!flip) return undefined;
 
   if (flip.phase === "grace_period" && !flip.prediction && !flip.result) {
@@ -150,10 +159,14 @@ export function finalizeCoinFlip(
   flip.winnerId = winner;
   flip.phase = "resolved";
 
-  log(
-    state,
-    `Coin flip resolved: ${winner ? findPlayerById(state, winner)?.name : "No one"} won the flip (${flip.prediction} vs ${flip.result})`,
-  );
+  if (!winner) {
+    log(state, "Coin flip resolved: no one won the flip");
+  } else {
+    log(
+      state,
+      `Coin flip resolved: ${findPlayerById(state, winner)?.name ?? "No one"} won the flip (${flip.prediction} vs ${flip.result})`,
+    );
+  }
 }
 
 export function determineFlipWinner(flip: CoinFlipState): string | undefined {
@@ -178,6 +191,7 @@ export function resolveItslamEffect(
   const winnerId = flip.winnerId;
   if (!winnerId) {
     state.activeCoinFlip = undefined;
+    log(state, "ITSLAM effect resolved: no winner, no effect applied");
     return true;
   }
   if (playerId !== winnerId) return false;

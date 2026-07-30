@@ -218,18 +218,33 @@
       if (finalizeTimer) clearTimeout(finalizeTimer);
     };
   });
+
+  $effect(() => {
+    if (!flip || effectivePhase !== "resolved" || flip.winnerId) return;
+
+    gameEngine.resolveItslamEffect(localPlayerId);
+    dispatcher?.publish({
+      type: "RESOLVE_ITSLAM",
+      payload: {},
+    });
+  });
 </script>
 
 {#if flip}
   <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl p-6 w-80 flex flex-col gap-4 items-center">
+    <div
+      class="bg-white rounded-xl p-6 w-80 flex flex-col gap-4 items-center text-center"
+    >
       <h2 class="text-lg font-bold">{flip.cardName}</h2>
 
       <div
         class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm text-slate-700"
       >
         <p class="font-semibold text-slate-800">
-          {challenger?.name ?? "Someone"} vs {defender?.name ?? "someone"}
+          {challenger?.name ?? "Someone"}
+          {challenger?.id === localPlayerId ? "(You)" : ""} vs {defender?.name ??
+            "someone"}
+          {defender?.id === localPlayerId ? "(You)" : ""}
         </p>
         <p class="mt-1 text-xs text-slate-600">
           {isChallenger
@@ -240,7 +255,9 @@
 
       {#if effectivePhase === "awaiting_prediction"}
         {#if isChallenger}
-          <p class="text-sm text-gray-600">Is that sheep looking at you?</p>
+          <p class="text-sm text-center text-gray-600">
+            Is that sheep looking at you?
+          </p>
           <div class="flex gap-3">
             <button
               type="button"
@@ -258,12 +275,12 @@
             </button>
           </div>
         {:else}
-          <p class="text-sm text-gray-600">
+          <p class="text-sm text-center text-gray-600">
             {flip.reFlipCount > 0
               ? `${challenger?.name ?? "The challenger"} is making a fresh prediction after a ReFlip.`
               : `Waiting for ${challenger?.name ?? "the challenger"} to make a prediction...`}
           </p>
-          <p class="text-xs text-slate-500">
+          <p class="text-xs text-center text-slate-500">
             {flip.reFlipCount > 0
               ? `The coin flip was reset and ${challenger?.name ?? "the challenger"} must predict again.`
               : `The result will be revealed after ${challenger?.name ?? "the challenger"} locks in their prediction.`}
@@ -277,13 +294,13 @@
           {flip.result === "looking" ? "🐑" : "🍑"}
         </div>
 
-        <p class="text-sm text-gray-600">
+        <p class="text-sm text-center text-gray-600">
           The sheep is <strong
             >{flip.result === "looking" ? "looking" : "not looking"}</strong
           > at you
         </p>
 
-        <p class="text-sm font-medium text-slate-700">
+        <p class="text-sm text-center font-medium text-slate-700">
           {flip.prediction === flip.result
             ? `${challenger?.name ?? "The challenger"} benefits if the prediction matches the flip.`
             : `${defender?.name ?? "The defender"} benefits if the prediction misses the flip.`}
@@ -303,20 +320,18 @@
         </button>
       {:else if effectivePhase === "resolved"}
         {#if !isWinner}
-          <p class="text-sm text-gray-600">
-            {winnerPlayer?.name ?? "No one"} won the flip and is resolving the effect...
+          <p class="text-sm text-center text-gray-600">
+            No one won the flip, so the effect is skipped.
           </p>
-          <p class="text-xs text-slate-600">
-            The winner is {winnerPlayer?.name ?? "no one"}, so {winnerPlayer?.name ===
-            localPlayerId
-              ? "you"
-              : (winnerPlayer?.name ?? "the winner")} gets the effect.
+          <p class="text-xs text-center text-slate-600">
+            The coin flip resolved without a winner, so this ITSLAM card closes
+            without applying an effect.
           </p>
         {:else}
-          <p class="text-sm text-gray-600">
+          <p class="text-sm text-center text-gray-600">
             You won! Resolving: {flip.cardName}
           </p>
-          <p class="text-xs text-slate-600 text-center">
+          <p class="text-xs text-center text-slate-600">
             The flip result benefited you, so you resolve the effect against {defender?.name ??
               "the target"}.
           </p>
