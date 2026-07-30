@@ -43,6 +43,7 @@ export function playItslamCard(
   };
 
   player.itslamPlayedThisTurn = true;
+  log(state, `${player.name} played ${card.name ?? "an ITSLAM card"}`);
   return true;
 }
 
@@ -172,55 +173,57 @@ export function resolveItslamEffect(
   let success = false;
   switch (flip.cardName) {
     case "Lure 2 Sheep":
-      if (
-        !loser ||
-        !sheepIndices ||
-        sheepIndices.length > 2 ||
-        !validateUniqueIndices(loser.field.length, sheepIndices)
-      )
-        return false;
-      success = handleLure2Sheep(state, winner, loser, sheepIndices);
+      if (!loser) return false;
+      if (sheepIndices && sheepIndices.length > 2) return false;
+      if (sheepIndices && sheepIndices.length > 0) {
+        if (!validateUniqueIndices(loser.field.length, sheepIndices))
+          return false;
+      }
+      success = handleLure2Sheep(state, winner, loser, sheepIndices ?? []);
       break;
     case "Remove 2 Sheep":
-      if (
-        !loser ||
-        !sheepIndices ||
-        sheepIndices.length > 2 ||
-        !validateUniqueIndices(loser.field.length, sheepIndices)
-      )
-        return false;
-      success = handleRemove2Sheep(state, winner, loser, sheepIndices);
+      if (!loser) return false;
+      if (sheepIndices && sheepIndices.length > 2) return false;
+      if (sheepIndices && sheepIndices.length > 0) {
+        if (!validateUniqueIndices(loser.field.length, sheepIndices))
+          return false;
+      }
+      success = handleRemove2Sheep(state, winner, loser, sheepIndices ?? []);
       break;
     case "Yoink Entire Hand":
       if (!loser) return false;
       success = handleYoinkEntireHand(state, winner, loser);
       break;
     case "Halve 2 Sheep":
+      if (!loser) return false;
+      if (sheepIndices && sheepIndices.length > 2) return false;
       if (
-        !loser ||
-        !sheepIndices ||
-        sheepIndices.length > 2 ||
-        !targetPartIndices ||
-        targetPartIndices.length !== sheepIndices.length ||
-        !validateUniqueIndices(loser.field.length, sheepIndices)
-      )
+        targetPartIndices &&
+        targetPartIndices.length > sheepIndices?.length!
+      ) {
         return false;
+      }
+      if (sheepIndices && sheepIndices.length > 0) {
+        if (!validateUniqueIndices(loser.field.length, sheepIndices))
+          return false;
+      }
+      if (
+        targetPartIndices &&
+        targetPartIndices.some((idx) => idx < 0 || idx > 1)
+      ) {
+        return false;
+      }
       success = handleHalve2Sheep(
         state,
         winner,
         loser,
-        sheepIndices,
-        targetPartIndices,
+        sheepIndices ?? [],
+        targetPartIndices ?? [],
       );
       break;
     case "Recover 1 Sheep":
-      if (
-        !discardIndices ||
-        discardIndices.length === 0 ||
-        discardIndices.length > 3
-      )
-        return false;
-      success = handleRecover1Sheep(state, winner, discardIndices);
+      if (discardIndices && discardIndices.length > 3) return false;
+      success = handleRecover1Sheep(state, winner, discardIndices ?? []);
       break;
     default:
       return false;
@@ -363,6 +366,14 @@ export function handleRecover1Sheep(
   winner: Player,
   discardIndices: number[],
 ): boolean {
+  if (discardIndices.length === 0) {
+    log(
+      state,
+      `${winner.name} chose not to recover a sheep from the discard pile`,
+    );
+    return true;
+  }
+
   if (!validateUniqueIndices(state.discardPile.length, discardIndices))
     return false;
 

@@ -304,6 +304,7 @@
             <button
               type="button"
               class="px-4 py-2 rounded-md bg-blue-700 text-white font-semibold hover:bg-blue-800 disabled:opacity-40"
+              disabled={selectedSheepIndices.length > 2}
               onclick={resolveSheepIndices}
             >
               Confirm
@@ -331,6 +332,7 @@
             <button
               type="button"
               class="px-4 py-2 rounded-md bg-blue-700 text-white font-semibold hover:bg-blue-800 disabled:opacity-40"
+              disabled={selectedSheepIndices.length > 2}
               onclick={resolveHalve}
             >
               Confirm
@@ -354,7 +356,7 @@
             <button
               type="button"
               class="px-4 py-2 rounded-md bg-blue-700 text-white font-semibold hover:bg-blue-800 disabled:opacity-40"
-              disabled={selectedDiscardIndices.length < 2}
+              disabled={selectedDiscardIndices.length > 3}
               onclick={resolveRecover}
             >
               Confirm
