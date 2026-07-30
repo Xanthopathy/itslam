@@ -201,10 +201,12 @@
   }
 </script>
 
-{#if gameState.status === "playing" && localPlayer}
-  <ChaosModal {localPlayerId} {dispatcher} />
+{#if (gameState.status === "playing" || gameState.status === "finished") && localPlayer}
+  {#if gameState.status === "playing"}
+    <ChaosModal {localPlayerId} {dispatcher} />
+  {/if}
 
-  <div class="flex flex-col gap-4 p-4">
+  <div class="flex flex-col gap-4 p-4 relative">
     <!-- turn indicator + piles -->
     <div
       class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm"
@@ -321,9 +323,9 @@
         </button>
       </div>
     {/if}
+
+    <GameOverModal {localPlayerId} />
   </div>
 {:else if gameState.status === "lobby"}
   <p class="text-center text-gray-500 p-8">Waiting for the game to start...</p>
-{:else if gameState.status === "finished"}
-  <GameOverModal {localPlayerId} />
 {/if}

@@ -30,6 +30,10 @@
 
   const isHost = $derived(localPlayerId === gameState.hostId);
 
+  function formatPlayerLabel(player: { id: string; name: string }) {
+    return player.id === localPlayerId ? `${player.name} (You)` : player.name;
+  }
+
   function playAgain() {
     // Re-init with the same players, same seats, fresh deck/hands
     gameEngine.InitGame(
@@ -46,12 +50,12 @@
       {#if isTie}
         <p class="text-center text-gray-700">
           It's a tie between <strong
-            >{winners.map((w) => w.name).join(" & ")}</strong
+            >{winners.map((w) => formatPlayerLabel(w)).join(" & ")}</strong
           >
         </p>
       {:else if winners.length === 1}
         <p class="text-center text-gray-700">
-          <strong>{winners[0].name}</strong> wins!
+          <strong>{formatPlayerLabel(winners[0])}</strong> wins!
         </p>
       {:else}
         <p class="text-center text-gray-700">No winner this round.</p>
@@ -70,7 +74,7 @@
           >
             <span>
               #{rank + 1}
-              {player.id === localPlayerId ? "You" : player.name}
+              {formatPlayerLabel(player)}
             </span>
             <span>{score} pts</span>
           </div>
