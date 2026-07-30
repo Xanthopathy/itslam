@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveItslamEffect } from '../src/lib/game/itslam.ts';
+import { playReFlipCard, resolveItslamEffect } from '../src/lib/game/itslam.ts';
 import type { GameState } from '../src/lib/types.ts';
 
 function createState(): GameState {
@@ -49,5 +49,26 @@ describe('ITSLAM resolution', () => {
 
     assert.equal(success, true);
     assert.equal(state.activeCoinFlip, undefined);
+  });
+
+  it('allows ReFlip during the grace buffer window after the countdown', () => {
+    const state = createState();
+    state.activeCoinFlip = {
+      challengerId: 'p1',
+      defenderId: 'p2',
+      cardId: 'flip-2',
+      cardName: 'Lure 2 Sheep',
+      phase: 'grace_period',
+      prediction: 'looking',
+      result: 'not_looking',
+      winnerId: 'p2',
+      graceWindowEndsAt: Date.now() - 10,
+      reFlipCount: 0,
+    };
+
+    const success = playReFlipCard(state, 'p1');
+
+    assert.equal(success, true);
+    assert.equal(state.activeCoinFlip?.phase, 'awaiting_prediction');
   });
 });

@@ -12,6 +12,8 @@ import {
 
 // ========== INTERACTION FLOW ==========
 
+const COIN_FLIP_GRACE_BUFFER_MS = 1000;
+
 /**
  * Play ITSLAM card with coin-flip mechanics:
  * 1. Get player's prediction (heads/tails)
@@ -57,6 +59,10 @@ export function playItslamCard(
 export function playReFlipCard(state: GameState, playerId: string): boolean {
   const flip = state.activeCoinFlip;
   if (!flip || flip.phase !== "grace_period") return false;
+
+  const graceDeadline =
+    (flip.graceWindowEndsAt ?? Date.now()) + COIN_FLIP_GRACE_BUFFER_MS;
+  if (Date.now() > graceDeadline) return false;
 
   flip.prediction = undefined;
   flip.result = undefined;
@@ -118,14 +124,19 @@ export function submitFlipResult(
   return true;
 }
 
-export function finalizeCoinFlip(state: GameState, playerId: string): void {
+export function finalizeCoinFlip(
+  state: GameState,
+  playerId: string,
+  bufferMs = COIN_FLIP_GRACE_BUFFER_MS,
+): void {
   if (playerId !== state.hostId) return;
 
   const flip = state.activeCoinFlip;
   if (!flip || flip.phase !== "grace_period") return;
 
   if (flip.graceWindowEndsAt === undefined) return;
-  if (Date.now() < flip.graceWindowEndsAt) return;
+  const finalizeDeadline = flip.graceWindowEndsAt + bufferMs;
+  if (Date.now() < finalizeDeadline) return;
 
   const winner = determineFlipWinner(flip);
   flip.winnerId = winner;
