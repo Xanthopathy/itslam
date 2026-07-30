@@ -81,6 +81,21 @@ Note: the URL param is purely a convenience wrapper around the existing MQTT joi
 - Author has limited familiarity with the codebase/TypeScript generally — prefer explaining _why_, not just handing over code, and flag design decisions rather than assuming silently.
 - We're using Svelte 5.
 
+## Debug Note - Room state inspection (gamelog)
+
+- Development/debug helper for inspecting the current room snapshot from local storage:
+
+```ts
+const roomCode = new URLSearchParams(window.location.search).get("room");
+const raw = localStorage.getItem(`itslam_game_state:${roomCode}`);
+if (!raw) {
+  console.log("No saved state found for this room.");
+} else {
+  const parsed = JSON.parse(raw);
+  console.log(JSON.stringify(parsed, null, 2));
+}
+```
+
 ## Issue Backlog
 
 This section tracks execution issues without changing the main phase roadmap above.
@@ -106,21 +121,6 @@ This section tracks execution issues without changing the main phase roadmap abo
 - **Severity**: high
 - **Status**: todo
 - **Problem**: card animation: moving across the board, moving between player hands, moving between draw and discard piles (make a real draw & discard pile visual too)
-
-#### Debug Note - Room state inspection
-
-- Add a development/debug helper for inspecting the current room snapshot from local storage:
-
-```ts
-const roomCode = new URLSearchParams(window.location.search).get("room");
-const raw = localStorage.getItem(`itslam_game_state:${roomCode}`);
-if (!raw) {
-  console.log("No saved state found for this room.");
-} else {
-  const parsed = JSON.parse(raw);
-  console.log(JSON.stringify(parsed, null, 2));
-}
-```
 
 #### Implementation Plan: UI-008 + UI-009
 
