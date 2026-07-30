@@ -44,6 +44,8 @@
       gameState.players.map((p) => ({ id: p.id, name: p.name })),
     );
 
+    // Dispatcher's publish() for host skips applyAction for SYNC_STATE
+    // and just broadcasts the fresh state snapshot.
     await dispatcher?.publish({
       type: "SYNC_STATE",
       payload: { state: $state.snapshot(gameEngine.state) },

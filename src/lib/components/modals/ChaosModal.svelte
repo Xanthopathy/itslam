@@ -36,7 +36,6 @@
   const isWinner = $derived(flip?.winnerId === localPlayerId);
 
   function resolveYoink() {
-    gameEngine.resolveItslamEffect(localPlayerId);
     dispatcher?.publish({
       type: "RESOLVE_ITSLAM",
       payload: {},
@@ -66,7 +65,6 @@
   }
 
   function resolveSheepIndices() {
-    gameEngine.resolveItslamEffect(localPlayerId, selectedSheepIndices);
     dispatcher?.publish({
       type: "RESOLVE_ITSLAM",
       payload: { sheepIndices: selectedSheepIndices },
@@ -88,11 +86,6 @@
 
   function resolveHalve() {
     const partIndices = selectedSheepIndices.map((i) => selectedPartIndices[i]);
-    gameEngine.resolveItslamEffect(
-      localPlayerId,
-      selectedSheepIndices,
-      partIndices,
-    );
     dispatcher?.publish({
       type: "RESOLVE_ITSLAM",
       payload: {
@@ -122,12 +115,6 @@
   }
 
   function resolveRecover() {
-    gameEngine.resolveItslamEffect(
-      localPlayerId,
-      undefined,
-      undefined,
-      selectedDiscardIndices,
-    );
     dispatcher?.publish({
       type: "RESOLVE_ITSLAM",
       payload: { discardIndices: selectedDiscardIndices },
@@ -137,7 +124,6 @@
   function playReFlip() {
     if (!reFlipCard) return;
 
-    gameEngine.playCards(localPlayerId, [reFlipCard.id]);
     dispatcher?.publish({
       type: "PLAY_CARDS",
       payload: { cardIds: [reFlipCard.id] },
@@ -145,7 +131,6 @@
   }
 
   function predict(prediction: "looking" | "not_looking") {
-    gameEngine.submitPrediction(localPlayerId, prediction);
     dispatcher?.publish({
       type: "SUBMIT_PREDICTION",
       payload: { prediction },
@@ -163,17 +148,13 @@
     gameState.players.find((p) => p.id === flip?.winnerId),
   );
 
-  // Only the host generates + submits the result, and only after a fixed
-  // delay - so the "reveal" is what gets synced to other clients, not the
-  // moment the host's own internals already knew the answer. This means
-  // every client's flip animation runs for roughly the same visible
-  // duration regardless of when their own state update actually lands.
+  // Only the host generates the random result, then submits it via the
+  // dispatcher so the host applies it and broadcasts the new state.
   $effect(() => {
     if (effectivePhase !== "flipping" || !isHost) return;
 
     const timer = setTimeout(() => {
       const result = gameEngine.generateFlipResult();
-      gameEngine.submitFlipResult(localPlayerId, result);
       dispatcher?.publish({
         type: "SUBMIT_FLIP_RESULT",
         payload: { result },
@@ -197,13 +178,9 @@
     tick();
     const interval = setInterval(tick, 250);
 
-    // Deterministic from already-synced state (prediction + result), so
-    // every client finalizing locally is safe - unlike the flip step above,
-    // this isn't introducing new randomness that needs a single source.
     const finalizeTimer = isHost
       ? setTimeout(
           () => {
-            gameEngine.finalizeCoinFlip(localPlayerId);
             dispatcher?.publish({
               type: "FINALIZE_COIN_FLIP",
               payload: {},
@@ -222,7 +199,6 @@
   $effect(() => {
     if (!flip || effectivePhase !== "resolved" || flip.winnerId) return;
 
-    gameEngine.resolveItslamEffect(localPlayerId);
     dispatcher?.publish({
       type: "RESOLVE_ITSLAM",
       payload: {},

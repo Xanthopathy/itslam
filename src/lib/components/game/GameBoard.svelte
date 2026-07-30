@@ -71,7 +71,6 @@
       selectionResetVersion += 1;
       return;
     }
-    gameEngine.endTurn(localPlayerId, []);
     dispatcher?.publish({
       type: "END_TURN",
       payload: { cardIdsToDiscard: [] },
@@ -81,7 +80,6 @@
   }
 
   function handleDiscard(cardIds: string[]) {
-    gameEngine.endTurn(localPlayerId, cardIds);
     dispatcher?.publish({
       type: "END_TURN",
       payload: { cardIdsToDiscard: cardIds },
@@ -94,9 +92,11 @@
   function handleHandPlay(cardIds: string[]) {
     if (!localPlayer) return;
 
+    const card = localPlayer.hand.find((c) => c.id === cardIds[0]);
+    if (!card) return;
+
     // 2-3 cards: always forming a sheep on your own field, never needs a target.
     if (cardIds.length >= 2) {
-      gameEngine.playCards(localPlayerId, cardIds);
       dispatcher?.publish({
         type: "PLAY_CARDS",
         payload: { cardIds },
@@ -104,12 +104,8 @@
       return;
     }
 
-    const card = localPlayer.hand.find((c) => c.id === cardIds[0]);
-    if (!card) return;
-
-    // ReFlip: gameStore special-cases this by name before checking type - it never needs a target, and can be played off-turn during grace period.
+    // ReFlip: can be played off-turn during grace period, never needs a target.
     if (card.name === "ReFlip") {
-      gameEngine.playCards(localPlayerId, cardIds);
       dispatcher?.publish({
         type: "PLAY_CARDS",
         payload: { cardIds },
@@ -120,15 +116,12 @@
     if (card.type === "head" || card.type === "butt") {
       pendingPlay = { cardIds, mode: "part-target" };
     } else if (card.type === "action") {
-      // Yoink targets a player only; Wolf/Wheat target a specific sheep.
       pendingPlay = {
         cardIds,
         mode: card.name === "Yoink" ? "player-target" : "sheep-target",
       };
     } else if (card.type === "itslam") {
-      // playItslamCard rejects any card other than "Recover 1 Sheep" without a targetPlayer - so only Recover skips the target step.
       if (card.name === "Recover 1 Sheep") {
-        gameEngine.playCards(localPlayerId, cardIds);
         dispatcher?.publish({
           type: "PLAY_CARDS",
           payload: { cardIds },
@@ -146,7 +139,6 @@
   // Committed once a target player is clicked (Yoink, or 4/5 itslam cards).
   function handlePlayerTarget(targetPlayerId: string) {
     if (!pendingPlay) return;
-    gameEngine.playCards(localPlayerId, pendingPlay.cardIds, targetPlayerId);
     dispatcher?.publish({
       type: "PLAY_CARDS",
       payload: { cardIds: pendingPlay.cardIds, targetPlayerId },
@@ -157,12 +149,6 @@
   // Committed once a specific sheep is clicked (Wolf, Wheat).
   function handleSheepTarget(targetPlayerId: string, sheepIndex: number) {
     if (!pendingPlay) return;
-    gameEngine.playCards(
-      localPlayerId,
-      pendingPlay.cardIds,
-      targetPlayerId,
-      sheepIndex,
-    );
     dispatcher?.publish({
       type: "PLAY_CARDS",
       payload: {
@@ -181,13 +167,6 @@
     partIndex: 0 | 1,
   ) {
     if (!pendingPlay) return;
-    gameEngine.playCards(
-      localPlayerId,
-      pendingPlay.cardIds,
-      targetPlayerId,
-      sheepIndex,
-      partIndex,
-    );
     dispatcher?.publish({
       type: "PLAY_CARDS",
       payload: {

@@ -1,49 +1,15 @@
 // src/lib/network/dispatcher.ts
 //
-// Centralizes "call gameEngine AND publish it to the room" so components
-// don't each need their own networking glue. Every mutating action still
-// calls gameEngine directly (local apply), and ALSO publishes so local state
-// updates immediately without waiting on network round-trips.
+// Host-authoritative dispatcher.
+//
+// - Host: applies every action locally via gameEngine, then broadcasts the
+//   full state snapshot (SYNC_STATE) to all clients.
+// - Clients: send intents to the host; only process SYNC_STATE messages.
+// - No more "apply locally + publish" pattern, no echo guards, no retained-
+//   state debounce. The host is the single source of truth.
 import { gameEngine, getGameStateSnapshot } from "../gameStore.svelte";
 import { NetworkClient } from "./client";
-import { canPublishAction } from "./host";
 import type { RoomAction, RoomActionMessage } from "./messages";
-
-const LOCALLY_APPLIED_ACTIONS = new Set<RoomAction["type"]>([
-  "PLAY_CARDS",
-  "END_TURN",
-  "SUBMIT_PREDICTION",
-  "SUBMIT_FLIP_RESULT",
-  "FINALIZE_COIN_FLIP",
-  "RESOLVE_ITSLAM",
-]);
-const RETAINED_STATE_DEBOUNCE_MS = 250;
-
-export function createRetainedStateScheduler(
-  schedulePublish: () => void,
-  delayMs = RETAINED_STATE_DEBOUNCE_MS,
-) {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-
-  return {
-    request() {
-      if (timer) {
-        clearTimeout(timer);
-      }
-
-      timer = setTimeout(() => {
-        timer = undefined;
-        schedulePublish();
-      }, delayMs);
-    },
-    cancel() {
-      if (timer) {
-        clearTimeout(timer);
-        timer = undefined;
-      }
-    },
-  };
-}
 
 export type Dispatcher = {
   publish: (action: RoomAction) => Promise<void>;
@@ -56,107 +22,94 @@ export function createDispatcher(
   localPlayerId: string,
   isHost: () => boolean,
 ): Dispatcher {
-  async function publish(action: RoomAction) {
-    if (!canPublishAction(action.type, isHost())) return;
-
-    await networkClient.publishToRoom({
-      ...action,
-      roomCode,
-      playerId: localPlayerId,
-      sentAt: Date.now(),
-    });
-
-    if (action.type !== "SYNC_STATE" && action.type !== "REQUEST_SYNC_STATE") {
-      publishRetainedStateIfHost();
-    }
-  }
-
-  const retainedStateScheduler = createRetainedStateScheduler(() => {
-    void awaitSyncState();
-  });
-
-  async function awaitSyncState(): Promise<void> {
-    await networkClient.publishToRoom({
-      type: "SYNC_STATE",
-      payload: { state: getGameStateSnapshot() },
-      roomCode,
-      playerId: localPlayerId,
-      sentAt: Date.now(),
-    }, { retain: true });
-  }
-
-  function publishRetainedStateIfHost(): void {
-    if (isHost() && gameEngine.state.status !== "lobby") {
-      retainedStateScheduler.request();
-    }
-  }
-
-  /**
-   * Applies an action received FROM ANOTHER CLIENT to local gameEngine state. This is the other half of "apply locally + publish" - each client's local action is applied via the direct gameEngine call at the call site (see GameBoard/ChaosModal), while this function is what makes everyone ELSE'S actions take effect on your client.
-   */
-  async function applyIncoming(message: RoomActionMessage): Promise<void> {
-    if (
-      message.playerId === localPlayerId &&
-      LOCALLY_APPLIED_ACTIONS.has(message.type)
-    )
-      return;
-
-    switch (message.type) {
-      case "PLAYER_JOINED":
-        break;
+  function applyAction(action: RoomAction, playerId: string): void {
+    switch (action.type) {
       case "PLAY_CARDS":
         gameEngine.playCards(
-          message.playerId,
-          message.payload.cardIds,
-          message.payload.targetPlayerId,
-          message.payload.targetSheepIndex,
-          message.payload.targetPartIndex,
-          message.payload.chosenIndices,
+          playerId,
+          action.payload.cardIds,
+          action.payload.targetPlayerId,
+          action.payload.targetSheepIndex,
+          action.payload.targetPartIndex,
+          action.payload.chosenIndices,
         );
-        publishRetainedStateIfHost();
         break;
       case "END_TURN":
-        gameEngine.endTurn(message.playerId, message.payload.cardIdsToDiscard);
-        publishRetainedStateIfHost();
+        gameEngine.endTurn(playerId, action.payload.cardIdsToDiscard);
         break;
       case "SUBMIT_PREDICTION":
-        gameEngine.submitPrediction(
-          message.playerId,
-          message.payload.prediction,
-        );
-        publishRetainedStateIfHost();
+        gameEngine.submitPrediction(playerId, action.payload.prediction);
         break;
       case "SUBMIT_FLIP_RESULT":
-        gameEngine.submitFlipResult(message.playerId, message.payload.result);
-        publishRetainedStateIfHost();
+        gameEngine.submitFlipResult(playerId, action.payload.result);
         break;
       case "FINALIZE_COIN_FLIP":
-        gameEngine.finalizeCoinFlip(message.playerId);
-        publishRetainedStateIfHost();
+        gameEngine.finalizeCoinFlip(playerId);
         break;
       case "RESOLVE_ITSLAM":
         gameEngine.resolveItslamEffect(
-          message.playerId,
-          message.payload.sheepIndices,
-          message.payload.targetPartIndices,
-          message.payload.discardIndices,
+          playerId,
+          action.payload.sheepIndices,
+          action.payload.targetPartIndices,
+          action.payload.discardIndices,
         );
-        publishRetainedStateIfHost();
         break;
-      case "SYNC_STATE":
-        gameEngine.loadState(message.payload.state);
-        break;
-      case "REQUEST_SYNC_STATE":
-        if (
-          message.playerId !== localPlayerId &&
-          gameEngine.state.status !== "lobby"
-        ) {
-          void awaitSyncState();
-        }
-        break;
-      // INIT_GAME / PLAYER_JOINED are handled by the lobby or host flow.
       default:
         break;
+    }
+  }
+
+  async function broadcastSyncState(): Promise<void> {
+    await networkClient.publishToRoom(
+      {
+        type: "SYNC_STATE",
+        payload: { state: getGameStateSnapshot() },
+        roomCode,
+        playerId: localPlayerId,
+        sentAt: Date.now(),
+      },
+      { retain: true },
+    );
+  }
+
+  async function publish(action: RoomAction) {
+    if (isHost()) {
+      // Host: apply locally (skip SYNC_STATE — caller already updated state),
+      // then broadcast the resulting snapshot.
+      if (action.type !== "SYNC_STATE") {
+        applyAction(action, localPlayerId);
+      }
+      await broadcastSyncState();
+    } else {
+      // Client: send intent to the host.
+      await networkClient.publishToRoom({
+        ...action,
+        roomCode,
+        playerId: localPlayerId,
+        sentAt: Date.now(),
+      });
+    }
+  }
+
+  async function applyIncoming(message: RoomActionMessage): Promise<void> {
+    // Echo guard: skip messages we sent ourselves.
+    if (message.playerId === localPlayerId) return;
+
+    if (isHost()) {
+      if (message.type === "REQUEST_SYNC_STATE") {
+        // Late-joiner: broadcast current state.
+        await broadcastSyncState();
+        return;
+      }
+      if (message.type === "PLAYER_JOINED" || message.type === "PLAYER_LIST_REQUEST") {
+        return; // handled by lobby flow
+      }
+      // Host: process other players' intents, then broadcast state.
+      applyAction(message, message.playerId);
+      await broadcastSyncState();
+    } else if (message.type === "SYNC_STATE") {
+      // Clients: only process full state snapshots.
+      gameEngine.loadState(message.payload.state);
     }
   }
 
