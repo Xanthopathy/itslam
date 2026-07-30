@@ -19,18 +19,33 @@
 </script>
 
 <div
-  class="flex flex-col gap-1 max-h-64 overflow-y-auto bg-gray-50 border border-gray-200 rounded-md p-2 text-sm"
+  class="flex flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-sm shadow-sm"
 >
-  {#if entries.length === 0}
-    <p class="text-gray-400 italic">No events yet.</p>
-  {:else}
-    {#each entries as entry (entry.id)}
-      <div class="flex gap-2">
-        <span class="text-gray-400 text-xs shrink-0 pt-0.5">
-          {formatTime(entry.timestamp)}
-        </span>
-        <span class="text-gray-700">{entry.message}</span>
-      </div>
-    {/each}
-  {/if}
+  <div class="flex items-center justify-between">
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+      Recent activity
+    </p>
+    <span
+      class="rounded-full bg-white px-2.5 py-1 text-xs text-slate-600 shadow-sm"
+    >
+      {entries.length} event{entries.length === 1 ? "" : "s"}
+    </span>
+  </div>
+
+  <div
+    class="flex max-h-64 flex-col gap-1 overflow-y-auto rounded-md bg-white p-2"
+  >
+    {#if entries.length === 0}
+      <p class="text-gray-400 italic">No events yet.</p>
+    {:else}
+      {#each entries as entry (entry.id)}
+        <div class="flex gap-2 rounded px-2 py-1.5 hover:bg-slate-50">
+          <span class="shrink-0 pt-0.5 text-xs text-slate-400">
+            {formatTime(entry.timestamp)}
+          </span>
+          <span class="text-slate-700">{entry.message}</span>
+        </div>
+      {/each}
+    {/if}
+  </div>
 </div>

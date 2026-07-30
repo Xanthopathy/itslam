@@ -38,11 +38,41 @@
       : `${playerName}'s Field (click to target)`,
   );
   const avatar = $derived(isLocalPlayer ? "🧑" : "🐑");
+  let hoverPreview = $state(false);
+
+  function handleSelect() {
+    if (onSelectAsTarget) {
+      onSelectAsTarget();
+    }
+  }
 </script>
 
 <div
-  class="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white/90 p-3 shadow-sm"
+  class="relative flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white/90 p-3 shadow-sm transition-all"
 >
+  {#if onSelectAsTarget}
+    <button
+      type="button"
+      class={`absolute inset-0 z-10 rounded-2xl border-2 transition-all ${hoverPreview ? "border-blue-400 bg-blue-500/10" : "border-transparent bg-transparent"}`}
+      onclick={handleSelect}
+      onmouseenter={() => {
+        hoverPreview = true;
+      }}
+      onmouseleave={() => {
+        hoverPreview = false;
+      }}
+      aria-label={`Select ${displayName} as target`}
+    >
+      <span class="sr-only">Select {displayName} as target</span>
+      {#if hoverPreview}
+        <span
+          class="absolute bottom-3 right-3 rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow"
+        >
+          Target this player
+        </span>
+      {/if}
+    </button>
+  {/if}
   <div class="flex items-center justify-between gap-2">
     <div class="flex items-center gap-2">
       <div

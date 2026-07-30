@@ -22,6 +22,37 @@
     gameState.players.find((p) => p.id === localPlayerId),
   );
 
+  let turnSummary = $derived.by(() => {
+    if (!localPlayer) return "Waiting for the game to start.";
+
+    if (pendingPlay) {
+      if (pendingPlay.mode === "player-target") {
+        return "Choose a player to target.";
+      }
+      if (pendingPlay.mode === "sheep-target") {
+        return "Choose a sheep to target.";
+      }
+      return "Choose a part to swap.";
+    }
+
+    if (awaitingDiscard) {
+      return "Discard down to 7 cards to end your turn.";
+    }
+
+    if (gameState.currentTurnPlayerId === localPlayerId) {
+      return "Your turn | Play a card, make a move, or end the turn.";
+    }
+
+    const currentPlayerName =
+      gameEngine.getCurrentTurnPlayerName() ?? "the active player";
+    return `${currentPlayerName} is taking their turn.`;
+  });
+
+  let latestEvent = $derived.by(() => {
+    const latest = gameState.gameLog[gameState.gameLog.length - 1];
+    return latest?.message ?? "The game is ready.";
+  });
+
   // A play that's selected but that needs a target before it can be committed.
   // null = no pending play, nothing waiting on a target click.
   type PendingPlay = {
@@ -175,18 +206,36 @@
 
   <div class="flex flex-col gap-4 p-4">
     <!-- turn indicator + piles -->
-    <div class="flex justify-between items-center text-sm text-gray-600">
-      <span>
-        {#if gameState.currentTurnPlayerId === localPlayerId}
-          <strong class="text-green-700">Your turn</strong>
-        {:else}
-          Waiting on {gameEngine.getCurrentTurnPlayerName()}
-        {/if}
-      </span>
-      <span
-        >Draw pile: {gameState.drawPile.length} | Discard: {gameState
-          .discardPile.length}</span
+    <div
+      class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm"
+    >
+      <div
+        class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
       >
+        <div>
+          <p
+            class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
+          >
+            Game status
+          </p>
+          <p class="text-lg font-semibold text-slate-800">{turnSummary}</p>
+          <p class="text-sm text-slate-600">Latest event: {latestEvent}</p>
+        </div>
+
+        <div class="flex flex-wrap gap-2 text-sm text-slate-700">
+          <span
+            class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 font-medium text-emerald-700"
+          >
+            Round {gameState.roundNumber}
+          </span>
+          <span class="rounded-full border border-slate-200 bg-white px-3 py-1">
+            Draw pile: {gameState.drawPile.length}
+          </span>
+          <span class="rounded-full border border-slate-200 bg-white px-3 py-1">
+            Discard: {gameState.discardPile.length}
+          </span>
+        </div>
+      </div>
     </div>
 
     <GameLog />
