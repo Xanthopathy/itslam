@@ -209,17 +209,31 @@
   <div class="flex flex-col gap-4 p-4 relative">
     <!-- turn indicator + piles -->
     <div
-      class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm"
+      class="rounded-2xl border border-slate-200 bg-linear-to-br from-slate-50 via-white to-slate-100 p-4 shadow-sm"
     >
       <div
-        class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
       >
-        <div>
-          <p
-            class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
-          >
-            Game status
-          </p>
+        <div class="space-y-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <span
+              class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700"
+            >
+              Game status
+            </span>
+            <span
+              class={[
+                "rounded-full px-3 py-1 text-sm font-medium",
+                gameState.currentTurnPlayerId === localPlayerId
+                  ? "bg-emerald-600 text-white"
+                  : "bg-slate-200 text-slate-700",
+              ].join(" ")}
+            >
+              {gameState.currentTurnPlayerId === localPlayerId
+                ? "Your turn"
+                : `${gameEngine.getCurrentTurnPlayerName() ?? "Active player"} to act`}
+            </span>
+          </div>
           <p class="text-lg font-semibold text-slate-800">{turnSummary}</p>
           <p class="text-sm text-slate-600">Latest event: {latestEvent}</p>
         </div>

@@ -48,7 +48,13 @@
 </script>
 
 <div
-  class="relative flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white/90 p-3 shadow-sm transition-all"
+  class={[
+    "relative flex flex-col gap-2 rounded-2xl border p-3 shadow-sm transition-all",
+    isActive
+      ? "border-emerald-400 bg-emerald-50/80 shadow-emerald-200"
+      : "border-gray-200 bg-white/90",
+    onSelectAsTarget ? "ring-1 ring-blue-200" : "",
+  ].join(" ")}
 >
   {#if onSelectAsTarget}
     <button
@@ -76,7 +82,10 @@
   <div class="flex items-center justify-between gap-2">
     <div class="flex items-center gap-2">
       <div
-        class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-lg"
+        class={[
+          "flex h-9 w-9 items-center justify-center rounded-full text-lg",
+          isActive ? "bg-emerald-100" : "bg-slate-100",
+        ].join(" ")}
       >
         {avatar}
       </div>
@@ -93,14 +102,23 @@
           <div class="text-sm font-semibold text-gray-800">{displayName}</div>
         {/if}
         <div class="text-xs text-gray-500">
-          {isLocalPlayer ? "Local player" : "Opponent"}
+          {isActive
+            ? "Active turn"
+            : isLocalPlayer
+              ? "Local player"
+              : "Opponent"}
         </div>
       </div>
     </div>
 
     <div class="flex items-center gap-2">
       <span
-        class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
+        class={[
+          "rounded-full px-2.5 py-1 text-xs font-medium",
+          isActive
+            ? "bg-emerald-600 text-white"
+            : "bg-slate-100 text-slate-700",
+        ].join(" ")}
       >
         Hand {handSize}
       </span>
